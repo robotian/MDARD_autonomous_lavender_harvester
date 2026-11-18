@@ -877,7 +877,7 @@ With your own copy of the asset, or any plant USD of about the same size under t
 
 ## Acknowledgements
 
-This work was funded by the Michigan Department of Agriculture and Rural Development (MDARD) through its Farm Innovation Grant program, and supported by the NVIDIA Academic Grant Program. It was carried out at Michigan Technological University.
+This work was funded by the Michigan Department of Agriculture and Rural Development (MDARD) through its Farm Innovation Grant program (grant number 24\*3460), and supported by the NVIDIA Academic Grant Program. It was carried out at Michigan Technological University.
 
 #NVIDIAGrant @NVIDIAAIDev
 
