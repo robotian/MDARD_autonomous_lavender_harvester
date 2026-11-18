@@ -1,8 +1,22 @@
-# Clearpath fleet in Isaac Sim
+# MDARD autonomous lavender harvester
+
+Software for a fleet of Clearpath robots that harvests a lavender field on its own, from Michigan Technological University's MDARD autonomous lavender harvester project. It covers the real robots and their simulation: the same ROS 2 Jazzy packages drive MTU's physical robots (Clearpath Jackal J100, Husky A200 and A300; `j100_0921` carries the Kinova arm with the stem cutter) and their counterparts in NVIDIA Isaac Sim 6.0, and one base station coordinates either.
+
+| Part | Real robots | Simulation | Where |
+|---|---|---|---|
+| **Robot software** (`colcon_ws/src`): bringup, Nav2 navigation, docking and charging, the arm's tasks, the cutter, the harvest executor | deployed unchanged to each robot (`scripts/deploy_robot.sh`) | runs in one container per robot, standing in for its onboard computer | *ROS workspace*, *Real robots: deploy and backup* |
+| **Base station** (`basestation/`, `status_server`): the farm database (plants, rows, routes, chargers) and the coordinator that hands plants to robots | reaches the robots over their network through a zenoh router or relay | reaches the robot containers the same way | *Base station*, *Harvesting operation* |
+| **Fleet web UI** (`tools/sim_ui`): the operation page, settings, per-robot actions | `--mode real`: services, deploy, arm moves and *Cut stem* over SSH | start and reset the sim, spawn robots, launch their stacks | *Harvesting operation*, *Real robots: deploy and backup* |
+| **Robot configurations** (`robot_data/<id>/robot.yaml`) | each robot's own Clearpath configuration | the sim builds its model of that robot from the same file | *Adding a real robot configuration file* |
+| **Simulation** (`sim/`, `docker-compose.yml`, `scripts/fleet.sh`): the Isaac Sim scene of the real field, robot models, sensors, physics | not used | the whole fleet without hardware, for development and for testing a change before it goes on a robot | from *Requirements* on |
+
+Most of this README is about the simulation, because that is the part with the most to set up; the sections named above are the ones that matter on real hardware. **Anything run in the real mode moves real robots:** use it only with the robots in sight and their emergency stops at hand.
+
+**This is the public release.** Two things are left out: the lavender plant-model study, and the lavender plant meshes (a purchased asset that may not be redistributed, see *Lavender plant meshes*). Read *License* before reusing anything.
+
+## The simulation at a glance
 
 A configurable number (0–8, one if the settings don't say otherwise) of Clearpath robots simulated in NVIDIA Isaac Sim 6.0 and driven over ROS 2 Jazzy. Each robot slot independently runs one of four generic Clearpath models — A300, A200, Jackal (`j100`) or Ridgeback (`r100`), each with a RealSense D435i facing forward — or one of MTU's real robots with its own sensors and Kinova arm (`j100_0921`, `a200_0284`, `a300_00036`, ...), so the fleet can be a single model or a mix; see *Number of robots*.
-
-**This is the public release** of MTU's lavender harvesting simulation: the robot fleet, the farm scene, the base station with the farm database and harvest coordinator, navigation and the arm's cutter. Two things are left out: the lavender plant-model study, and the lavender plant meshes (a purchased asset that may not be redistributed, see *Lavender plant meshes*). Read *License* before reusing anything.
 
 - **Isaac Sim** runs in one container and is streamed to you over WebRTC, or shows its own desktop window with `SIM_MODE=headed` (needs `scripts/x11_auth.sh`; the headed app takes ~3 min to start).
 - **Each robot** has its own ROS 2 container, standing in for the robot's onboard computer. It talks to the sim over a private Docker network, as a real robot would over a LAN. The middleware is `rmw_zenoh_cpp` (as on the real robots, through a `zenoh-router` container) or Fast DDS; see *Middleware*.
@@ -19,6 +33,8 @@ A configurable number (0–8, one if the settings don't say otherwise) of Clearp
 ```
 
 ## Requirements
+
+For the simulation and the base station on a PC. A real robot needs none of this: it needs its Clearpath ROS 2 Jazzy installation, SSH key login from this PC (`scripts/deploy_robot.sh`), and a network path to the base station (*Base station*).
 
 - **Linux with an NVIDIA RTX GPU** (ray-tracing cores required). Developed on an RTX 4080 SUPER, NVIDIA's recommended minimum for Isaac Sim 6.0; it also runs, more slowly, on a TITAN RTX (Turing).
 - **NVIDIA driver 580 or newer.** Isaac Sim 6.0 recommends 580.95.05 and refuses drivers older than 550.90.07 (the log then says `rtx driver verification failed` and the sim never gets to the scene). On Ubuntu: `ubuntu-drivers list`, then e.g. `sudo apt install nvidia-driver-580` and reboot.
@@ -446,7 +462,7 @@ Set a sim battery for tests: `docker exec j100_0921 bash -c 'ros2 param set /j10
 
 ## Real robots: deploy and backup
 
-The same `colcon_ws/src` runs on MTU's real robots. Robot-specific details are in `scripts/CLAUDE.md`.
+The same `colcon_ws/src` runs on MTU's real robots, unchanged: nothing in it may depend on the sim (container names, sim-only paths) without a fallback that works on a robot. Robot-specific details are in `scripts/CLAUDE.md`.
 
 ```bash
 scripts/deploy_robot.sh <id> [--dry-run]  # rsync colcon_ws/src to the robot's ~/colcon_ws and build it there (over its ~/robot_ws)

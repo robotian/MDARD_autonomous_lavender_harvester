@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-A fleet of Clearpath robots simulated in Isaac Sim 6.0 and driven over ROS 2 Jazzy: one Isaac Sim container, plus one ROS 2 container per robot standing in for its onboard computer. Docker Compose plus scripts; no build system, test suite or linter. Architecture, setup and the full command reference are in `README.md`; each area has its own `CLAUDE.md` (`sim/`, `robot/`, `colcon_ws/`, `scripts/`, `tools/sim_ui/`). Adding or debugging a real MTU robot → skill `add-real-robot`.
+MTU's lavender-harvesting fleet of Clearpath robots, real and simulated, on ROS 2 Jazzy: `colcon_ws/src` runs unchanged on the real robots and in the sim, and one base station coordinates either. The simulation (Isaac Sim 6.0): one Isaac Sim container, plus one ROS 2 container per robot standing in for its onboard computer. Docker Compose plus scripts; no build system, test suite or linter. Architecture, setup and the full command reference are in `README.md`; each area has its own `CLAUDE.md` (`sim/`, `robot/`, `colcon_ws/`, `scripts/`, `tools/sim_ui/`). Adding or debugging a real MTU robot → skill `add-real-robot`.
 
 ## How it fits together
 
