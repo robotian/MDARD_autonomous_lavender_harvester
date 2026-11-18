@@ -12,6 +12,8 @@ Software for a fleet of Clearpath robots that harvests a lavender field on its o
 
 Most of this README is about the simulation, because that is the part with the most to set up; the sections named above are the ones that matter on real hardware. **Anything run in the real mode moves real robots:** use it only with the robots in sight and their emergency stops at hand.
 
+The project is funded by the Michigan Department of Agriculture and Rural Development (MDARD); see *Acknowledgements*.
+
 **This is the public release.** Two things are left out: the lavender plant-model study, and the lavender plant meshes (a purchased asset that may not be redistributed, see *Lavender plant meshes*). Read *License* before reusing anything.
 
 ## The simulation at a glance
@@ -872,6 +874,10 @@ The plants' meshes are not in this repository: the lavender mesh was bought on E
 - `sim/assets/lavender_v2/Props/SM_Lavender_Nanite_01.usd`, `_02.usd` and `_05.usd` with their materials: the plants of `sim/scene/lavender_farm.usd` (ready to harvest, and harvested).
 
 With your own copy of the asset, or any plant USD of about the same size under those names, the scenes show plants again. Without them the references don't resolve and the rows are empty; the rest of the scene, the farm database and the harvest operation don't depend on the meshes. The scenes have not been run without the meshes, so expect warnings about the missing files and check the plants' collision cores (`soften_lavender` in `sim/scripts/setup_scene.py`) if robots behave oddly in the rows. The sections that describe the plants' look (*Lavender material* and others) apply once the meshes are there.
+
+## Acknowledgements
+
+This work was funded by the Michigan Department of Agriculture and Rural Development (MDARD) through its Farm Innovation Grant program, and carried out at Michigan Technological University.
 
 ## License
 
