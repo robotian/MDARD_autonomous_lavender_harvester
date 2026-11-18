@@ -12,7 +12,7 @@ Software for a fleet of Clearpath robots that harvests a lavender field on its o
 
 Most of this README is about the simulation, because that is the part with the most to set up; the sections named above are the ones that matter on real hardware. **Anything run in the real mode moves real robots:** use it only with the robots in sight and their emergency stops at hand.
 
-The project is funded by the Michigan Department of Agriculture and Rural Development (MDARD); see *Acknowledgements*.
+The project is funded by the Michigan Department of Agriculture and Rural Development (MDARD) and supported by the NVIDIA Academic Grant Program (#NVIDIAGrant, @NVIDIAAIDev); see *Acknowledgements*.
 
 **This is the public release.** Two things are left out: the lavender plant-model study, and the lavender plant meshes (a purchased asset that may not be redistributed, see *Lavender plant meshes*). Read *License* before reusing anything.
 
@@ -877,7 +877,9 @@ With your own copy of the asset, or any plant USD of about the same size under t
 
 ## Acknowledgements
 
-This work was funded by the Michigan Department of Agriculture and Rural Development (MDARD) through its Farm Innovation Grant program, and carried out at Michigan Technological University.
+This work was funded by the Michigan Department of Agriculture and Rural Development (MDARD) through its Farm Innovation Grant program, and supported by the NVIDIA Academic Grant Program. It was carried out at Michigan Technological University.
+
+#NVIDIAGrant @NVIDIAAIDev
 
 ## License
 
