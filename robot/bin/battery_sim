@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Simulated battery: sensor_msgs/BatteryState on platform/bms/state, the topic a real Clearpath robot's BMS
+publishes (husky_operations_manager reads it to decide when to charge). Sim only: a real robot has its own.
+
+- Discharges linearly in sim time, full to empty in `runtime_hours`: j100/a200 1.5 h, a300 2.5 h (typical runtimes
+  of the real robots), unless set.
+- Charges (full in `charge_hours`) while the robot stands docked: base_link within `dock_radius` (0.15 m) of one of
+  its Nav2 docking server's dock poses (where base_link ends up docked; read from the Nav2 params bringup_nav2_map
+  writes to /tmp/<ns>_nav2_map.yaml) and slower than 5 cm/s. Nav2's docking server calls the dock done as soon as
+  this charging current appears (use_battery_status), so it must not appear before the robot is on the dock: a
+  1.3 m radius around the station also covered the j100's staging pose (1.22 m), where docking then ended at once
+  (2026-10-15). Without that file (no Nav2 launched yet), within `charge_radius` (1.3 m) of a station's centre. The stations are the scene's (the sim copies them from the scene file into
+  /generated/fleet/state.json); the robot's pose is the sim's ref_pose (world frame).
+- Voltage / capacity from robot.yaml's battery (model + configuration, e.g. S_24V20_U1 S1P2 = 24 V 40 Ah), else
+  the platform's usual pack. Voltage is a simple linear curve on the charge, not a cell model.
+- Starts at `percentage` (default 100); `ros2 param set /<ns>/battery_sim percentage 30` sets the charge at any time.
+
+It runs on the node clock (sim time with USE_SIM_TIME), so a paused sim doesn't drain it; a container restart
+(Reset scene, spawn) starts it full again.
+"""
+import json
+import math
+import os
+import re
+import sys
+
+import rclpy
+import yaml
+from nav_msgs.msg import Odometry
+from rcl_interfaces.msg import SetParametersResult
+from rclpy.executors import ExternalShutdownException, SingleThreadedExecutor
+from rclpy.node import Node
+from sensor_msgs.msg import BatteryState
+
+STATE_FILE = "/generated/fleet/state.json"
+ROBOT_YAML = "/etc/clearpath/robot.yaml"
+RUNTIME_H = {"j100": 1.5, "a200": 1.5, "a300": 2.5}  # full to empty
+DEFAULT_RUNTIME_H = 1.5
+# platform -> (volts, amp-hours, technology) when robot.yaml names no battery
+DEFAULT_PACK = {
+    "j100": (24.0, 11.0, BatteryState.POWER_SUPPLY_TECHNOLOGY_LION),  # Jackal: ~270 Wh lithium
+    "a200": (24.0, 20.0, BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN),  # Husky: 2 x 12 V 20 Ah sealed lead-acid
+    "a300": (24.0, 40.0, BatteryState.POWER_SUPPLY_TECHNOLOGY_LION),  # Husky Observer: S_24V20_U1 S1P2
+}
+# robot.yaml battery models: (volts, amp-hours, technology) of one unit
+BATTERY_MODELS = {
+    "S_24V20_U1": (24.0, 20.0, BatteryState.POWER_SUPPLY_TECHNOLOGY_LION),
+    "ES20_12C": (12.0, 20.0, BatteryState.POWER_SUPPLY_TECHNOLOGY_UNKNOWN),
+}
+NAV2_PARAMS = "/tmp/{ns}_nav2_map.yaml"  # bringup_nav2_map's generated params (the sim's dock poses)
+STILL_MPS = 0.05
+PERIOD_S = 1.0
+
+
+def pack(platform):
+    """(volts, amp-hours, technology) from robot.yaml's platform.battery, else the platform's usual pack."""
+    try:
+        with open(ROBOT_YAML) as f:
+            battery = (yaml.safe_load(f).get("platform") or {}).get("battery") or {}
+        unit = BATTERY_MODELS[battery["model"]]
+        s, p = map(int, re.fullmatch(r"S(\d+)P(\d+)", battery.get("configuration", "S1P1")).groups())
+        return unit[0] * s, unit[1] * p, unit[2]
+    except (OSError, KeyError, TypeError, AttributeError, ValueError, yaml.YAMLError):
+        return DEFAULT_PACK.get(platform, DEFAULT_PACK["j100"])
+
+
+def chargers():
+    try:
+        with open(STATE_FILE) as f:
+            return json.load(f).get("chargers") or []
+    except (OSError, ValueError):
+        return []
+
+
+def dock_poses(ns):
+    """(x, y) of every dock in the Nav2 docking server's params (map frame = the sim's world frame), or []."""
+    try:
+        with open(NAV2_PARAMS.format(ns=ns)) as f:
+            p = yaml.safe_load(f)["docking_server"]["ros__parameters"]
+        return [tuple(p[d]["pose"][:2]) for d in p.get("docks") or [] if p[d].get("frame", "map") == "map"]
+    except (OSError, KeyError, TypeError, IndexError, yaml.YAMLError):
+        return []
+
+
+class BatterySim(Node):
+    def __init__(self, platform):
+        super().__init__("battery_sim")
+        self.volts, self.amp_hours, self.technology = pack(platform)
+        self.runtime_h = self.declare_parameter("runtime_hours", RUNTIME_H.get(platform, DEFAULT_RUNTIME_H)).value
+        self.charge_h = self.declare_parameter("charge_hours", 2.0).value
+        self.radius = self.declare_parameter("charge_radius", 1.3).value
+        self.dock_radius = self.declare_parameter("dock_radius", 0.15).value
+        self.soc = min(max(self.declare_parameter("percentage", 100.0).value / 100.0, 0.0), 1.0)
+        self.add_on_set_parameters_callback(self.on_set)
+        self.pub = self.create_publisher(BatteryState, "platform/bms/state", 10)
+        self.create_subscription(Odometry, "ref_pose", self.on_pose, 10)
+        self.pose = None  # (x, y, sim seconds)
+        self.speed = 0.0
+        self.stations, self.docks, self.stations_t = [], [], None
+        self.last = None
+        self.charging = False
+        self.create_timer(PERIOD_S, self.tick)
+        self.get_logger().info(
+            f"{platform}: {self.volts:.0f} V {self.amp_hours:.0f} Ah, empty after {self.runtime_h} h, "
+            f"full after {self.charge_h} h at a charger, starting at {self.soc * 100:.0f} %")
+
+    def on_set(self, params):
+        for p in params:
+            if p.name == "percentage":
+                if not 0.0 <= float(p.value) <= 100.0:
+                    return SetParametersResult(successful=False, reason="percentage is 0-100")
+                self.soc = float(p.value) / 100.0
+            elif p.name in ("runtime_hours", "charge_hours", "charge_radius", "dock_radius"):
+                if float(p.value) <= 0.0:
+                    return SetParametersResult(successful=False, reason=f"{p.name} must be > 0")
+                setattr(self, {"runtime_hours": "runtime_h", "charge_hours": "charge_h",
+                               "charge_radius": "radius", "dock_radius": "dock_radius"}[p.name], float(p.value))
+        return SetParametersResult(successful=True)
+
+    def on_pose(self, msg):
+        x, y = msg.pose.pose.position.x, msg.pose.pose.position.y
+        t = self.get_clock().now().nanoseconds * 1e-9
+        if self.pose and t > self.pose[2]:
+            self.speed = math.hypot(x - self.pose[0], y - self.pose[1]) / (t - self.pose[2])
+        if not self.pose or t > self.pose[2]:
+            self.pose = (x, y, t)
+
+    def at_charger(self):
+        if self.pose is None or self.speed > STILL_MPS:
+            return False
+        if self.docks:
+            return any(math.hypot(self.pose[0] - x, self.pose[1] - y) <= self.dock_radius for x, y in self.docks)
+        return any(math.hypot(self.pose[0] - c["x"], self.pose[1] - c["y"]) <= self.radius for c in self.stations)
+
+    def tick(self):
+        now = self.get_clock().now().nanoseconds * 1e-9
+        if self.stations_t is None or not 0 <= now - self.stations_t < 10.0:  # the scene can change under it
+            self.stations, self.docks, self.stations_t = chargers(), dock_poses(self.get_namespace().strip("/")), now
+        dt = 0.0 if self.last is None else now - self.last
+        self.last = now
+        if not 0.0 < dt < 10.0:  # no /clock yet, a paused sim, or the clock jumped (sim restarted)
+            dt = 0.0
+        charging = self.at_charger()
+        if charging != self.charging:
+            self.get_logger().info(f"{'charging' if charging else 'off the charger'} at {self.soc * 100:.1f} %")
+            self.charging = charging
+        if charging:
+            self.soc = min(1.0, self.soc + dt / (self.charge_h * 3600.0))
+        else:
+            self.soc = max(0.0, self.soc - dt / (self.runtime_h * 3600.0))
+
+        m = BatteryState()
+        m.header.stamp = self.get_clock().now().to_msg()
+        m.voltage = self.volts * (0.92 + 0.13 * self.soc)
+        m.temperature = math.nan
+        full = charging and self.soc >= 1.0
+        m.current = 0.0 if full else self.amp_hours / self.charge_h if charging else -self.amp_hours / self.runtime_h
+        m.charge = self.amp_hours * self.soc
+        m.capacity = m.design_capacity = self.amp_hours
+        m.percentage = self.soc  # 0-1, the ROS convention
+        m.power_supply_status = (BatteryState.POWER_SUPPLY_STATUS_FULL if full
+                                 else BatteryState.POWER_SUPPLY_STATUS_CHARGING if charging
+                                 else BatteryState.POWER_SUPPLY_STATUS_DISCHARGING)
+        m.power_supply_health = (BatteryState.POWER_SUPPLY_HEALTH_DEAD if self.soc <= 0.0
+                                 else BatteryState.POWER_SUPPLY_HEALTH_GOOD)
+        m.power_supply_technology = self.technology
+        m.present = True
+        m.location = "platform"
+        self.pub.publish(m)
+
+
+def main():
+    ns = os.environ["ROBOT_NAMESPACE"]
+    platform = os.environ.get("ROBOT_MODEL", ns).split("_")[0]
+    args = sys.argv + ["--ros-args", "-r", f"__ns:=/{ns}",
+                       "-p", f"use_sim_time:={os.environ.get('USE_SIM_TIME', 'false')}"]
+    rclpy.init(args=args)
+    node = BatterySim(platform)
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+    # Not rclpy.spin(): under use_sim_time it never returns after SIGTERM/SIGINT (the signal shuts the context down,
+    # the timers run on the ROS clock and /clock stops with the context, so nothing wakes the executor's wait).
+    # spin_once with a wall-time timeout re-checks rclpy.ok() at least every 0.5 s.
+    try:
+        while rclpy.ok():
+            executor.spin_once(timeout_sec=0.5)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    finally:
+        executor.shutdown()
+        node.destroy_node()
+        rclpy.try_shutdown()
+
+
+if __name__ == "__main__":
+    main()

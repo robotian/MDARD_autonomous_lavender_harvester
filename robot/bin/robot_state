@@ -1,0 +1,116 @@
+#!/bin/bash
+# What the Clearpath robot service does on the real A300: build the robot description from
+# /etc/clearpath/robot.yaml and run robot_state_publisher, so the full TF tree (base_link -> chassis ->
+# wheels, top plate, camera_0_link, ...) is published under the robot's namespace. odom -> base_link comes from
+# the platform EKF (robot/bin/ekf); the sim publishes ground_truth -> base_link_ground_truth and camera_0_link ->
+# camera_0_color_optical_frame; wheel poses come from platform/joint_states.
+set -e
+ns="${ROBOT_NAMESPACE:?}"
+ros2 run clearpath_generator_common generate_description -s /etc/clearpath > /dev/null
+xacro /etc/clearpath/robot.urdf.xacro -o /etc/clearpath/robot.urdf
+# robot_description contains commas/colons, so it has to travel in a params file rather than a -p argument
+python3 - <<'PY'
+import json
+import xml.etree.ElementTree as ET
+
+# Same fix as scripts/flatten_urdf.py's own prune_dangling_joints / generate_srdf's reimplementation of it:
+# mtu32_description's xacro unconditionally mounts camera_1 on arm_0_end_effector_link, which doesn't exist on
+# an armless robot (e.g. j100_0922) -- xacro itself never validates this, but robot_state_publisher's own
+# strict URDF loader does, and was aborting every single time this script ran, crash-looping silently (found
+# via restart_ros actually surfacing it, not previously noticed -- the loop's own "|| true" swallowed the
+# abort at every normal boot too). Re-implemented here rather than imported since flatten_urdf.py is a
+# host-side build script, not installed in this image.
+def prune_dangling_joints(root):
+    pruned = False
+    changed = True
+    while changed:
+        changed = False
+        link_names = {link.get('name') for link in root.findall('link')}
+        for joint in root.findall('joint'):
+            parent_name = joint.find('parent').get('link')
+            if parent_name in link_names:
+                continue
+            child_name = joint.find('child').get('link')
+            child = next((link for link in root.findall('link') if link.get('name') == child_name), None)
+            print(f'[robot_state] dropping joint {joint.get("name")!r}: parent {parent_name!r} is never defined as a link')
+            root.remove(joint)
+            if child is not None:
+                root.remove(child)
+            changed = True
+            pruned = True
+            break
+    return pruned
+
+# Same fix as scripts/flatten_urdf.py's limit_continuous_arm_joints (see its docstring): the arm's continuous
+# joints get finite +-3.12 rad limits so MoveIt plans the long way round instead of across +-pi, which would leave a
+# simulated joint at e.g. 4.995 rad and make MoveIt reject the state (START_STATE_INVALID). Robots whose arm has
+# only limited joints (Gen3 Lite) are unaffected.
+def limit_continuous_arm_joints(root, limit=3.12):
+    changed = False
+    for j in root.findall('joint'):
+        if j.get('type') == 'continuous' and j.get('name', '').startswith('arm_0_joint'):
+            j.set('type', 'revolute')
+            lim = j.find('limit')
+            if lim is None:
+                lim = ET.SubElement(j, 'limit')
+            lim.set('lower', str(-limit))
+            lim.set('upper', str(limit))
+            lim.set('effort', lim.get('effort', '10'))
+            lim.set('velocity', lim.get('velocity', '1'))
+            changed = True
+    return changed
+
+tree = ET.parse("/etc/clearpath/robot.urdf")
+_pruned = prune_dangling_joints(tree.getroot())
+_limited = limit_continuous_arm_joints(tree.getroot())
+if _pruned or _limited:
+    tree.write("/etc/clearpath/robot.urdf")
+    # Other consumers read the raw robot.urdf.xacro instead of this cleaned URDF -- notably the shared
+    # mtu32_bringup moveit.launch.py (xacro.process_file on /etc/clearpath/robot.urdf.xacro), which makes
+    # move_group / moveit_servo / grid_cutter_action_server abort with "parent link ... not found" (a200_0284:
+    # its robot.yaml has links.box "basket" with parent arm_base_link, but the arm base link is arm_0_base_link).
+    # A fully expanded URDF is a valid xacro file too, so give them the pruned one. Only done when something was
+    # actually pruned, so robots with a clean description (j100_0921, a300_00036, ...) keep the generated xacro.
+    tree.write("/etc/clearpath/robot.urdf.xacro")
+    print("[robot_state] wrote the modified description (pruned dangling joints / limited continuous arm joints) to /etc/clearpath/robot.urdf.xacro too")
+
+urdf = open("/etc/clearpath/robot.urdf").read()
+
+# The cutter EE (mtu32_description's ee_cutter_link, j100_0921) replaces the 2F Lite's fingers, whose links stay
+# (MoveIt and the arm driver command its finger joint): RViz / Foxglove would draw them inside the EE. The published
+# topic loses their visuals; robot.urdf(.xacro), which MoveIt reads, keeps them.
+# Its moving bodies hang on fixed ee_cutter_<body>_joint (a real robot has no state for them); here they get the
+# sim's joint types (sim/scripts/ee_cutter.py BODIES: the slide along the tool axis, the rest about the CAD pivot
+# axis = the gripper's x), so robot_state_publisher moves them with the sim's platform/joint_states.
+desc = ET.fromstring(urdf)
+if desc.find("link[@name='ee_cutter_link']") is not None:
+    for link in desc.findall("link"):
+        if link.get("name", "").startswith("arm_0_gripper_") and "_finger_" in link.get("name"):
+            for v in link.findall("visual"):
+                link.remove(v)
+    for j in desc.findall("joint"):
+        name = j.get("name", "")
+        if name.startswith("ee_cutter_") and name != "ee_cutter_joint" and j.get("type") == "fixed":
+            slide = name == "ee_cutter_slide_joint"
+            j.set("type", "prismatic" if slide else "revolute")
+            ET.SubElement(j, "axis", xyz="0 0 1" if slide else "1 0 0")
+            ET.SubElement(j, "limit", lower="0" if slide else "-3.14", upper="0.02" if slide else "3.14",
+                          effort="10", velocity="10")
+    urdf = ET.tostring(desc, encoding="unicode")
+
+# Some descriptions reference meshes as file://$(find pkg)/... (realsense2_description's D435, robotiq_description's
+# gripper). foxglove_bridge only serves package:// assets (its default asset_uri_allowlist), so the Foxglove URDF
+# panel left those links empty. Only the published topic is rewritten; robot.urdf(.xacro) keep the original URIs.
+import os, re
+def to_package_uri(m):
+    prefix, pkg = m.group(1), m.group(2)
+    if os.path.exists(f"{prefix}/share/ament_index/resource_index/packages/{pkg}"):
+        return f"package://{pkg}/"
+    return m.group(0)
+urdf = re.sub(r"file://(/[^\"'\s]*?)/share/([\w-]+)/", to_package_uri, urdf)
+
+open("/tmp/robot_description.yaml", "w").write("/**:\n  ros__parameters:\n    robot_description: " + json.dumps(urdf) + "\n")
+PY
+exec ros2 run robot_state_publisher robot_state_publisher --ros-args \
+    -r __ns:=/"$ns" -r joint_states:=platform/joint_states -r /tf:=tf -r /tf_static:=tf_static \
+    --params-file /tmp/robot_description.yaml -p use_sim_time:="${USE_SIM_TIME:-false}"

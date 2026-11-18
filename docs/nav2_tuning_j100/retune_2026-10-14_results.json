@@ -1,0 +1,2258 @@
+{
+ "jb_J1_r1": [
+  {
+   "name": "warmup_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 43.2,
+   "time_s": 20.9,
+   "pos_err_m": 0.1214,
+   "yaw_err_deg": 0.23,
+   "pos_err_at_result_m": 0.1162,
+   "yaw_err_at_result_deg": 4.36,
+   "path_m": 5.85,
+   "reverse_m": 0.006,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.11,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.59,
+   "peak_decel_mps2": 1.12,
+   "max_tilt_deg": 0.5,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.454,
+    1.754,
+    -3.5
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.6,
+   "time_s": 34.03,
+   "pos_err_m": 0.098,
+   "yaw_err_deg": 1.57,
+   "pos_err_at_result_m": 0.0948,
+   "yaw_err_at_result_deg": 5.67,
+   "path_m": 14.68,
+   "reverse_m": 0.01,
+   "reverse_max_m": 0.007,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.92,
+   "peak_decel_mps2": 0.6,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.454,
+    1.754,
+    -3.5
+   ],
+   "end": [
+    5.875,
+    -4.844,
+    -1.9
+   ],
+   "est_s": 33.5,
+   "route_m": 14.26
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 18.3,
+   "time_s": 1.6,
+   "pos_err_m": 0.0668,
+   "yaw_err_deg": 3.32,
+   "pos_err_at_result_m": 0.0957,
+   "yaw_err_at_result_deg": 3.72,
+   "path_m": 0.49,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.32,
+   "peak_decel_mps2": 0.54,
+   "max_tilt_deg": 0.3,
+   "start": [
+    5.875,
+    -4.844,
+    -1.9
+   ],
+   "end": [
+    6.361,
+    -4.86,
+    3.0
+   ],
+   "est_s": 6.1,
+   "route_m": 0.55
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.8,
+   "time_s": 2.33,
+   "pos_err_m": 0.0834,
+   "yaw_err_deg": 6.22,
+   "pos_err_at_result_m": 0.1155,
+   "yaw_err_at_result_deg": 4.44,
+   "path_m": 0.89,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.4,
+   "peak_decel_mps2": 0.53,
+   "max_tilt_deg": 0.3,
+   "start": [
+    6.361,
+    -4.86,
+    3.0
+   ],
+   "end": [
+    7.253,
+    -4.841,
+    -6.6
+   ],
+   "est_s": 6.9,
+   "route_m": 0.97
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 70.0,
+   "time_s": 20.4,
+   "pos_err_m": 0.0871,
+   "yaw_err_deg": 2.95,
+   "pos_err_at_result_m": 0.0862,
+   "yaw_err_at_result_deg": 6.82,
+   "path_m": 9.14,
+   "reverse_m": 0.003,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.16,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.27,
+   "peak_decel_mps2": 0.7,
+   "max_tilt_deg": 0.4,
+   "start": [
+    7.253,
+    -4.841,
+    -6.6
+   ],
+   "end": [
+    16.338,
+    -4.913,
+    2.6
+   ],
+   "est_s": 23.3,
+   "route_m": 9.17
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 43.2,
+   "time_s": 19.1,
+   "pos_err_m": 0.0837,
+   "yaw_err_deg": 3.05,
+   "pos_err_at_result_m": 0.1004,
+   "yaw_err_at_result_deg": 2.67,
+   "path_m": 6.02,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.33,
+   "peak_decel_mps2": 0.77,
+   "max_tilt_deg": 0.5,
+   "start": [
+    16.338,
+    -4.913,
+    2.6
+   ],
+   "end": [
+    16.598,
+    -5.05,
+    -177.1
+   ],
+   "est_s": 14.4,
+   "route_m": 4.71
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 355.2,
+   "time_s": 125.07,
+   "pos_err_m": 0.0965,
+   "yaw_err_deg": 2.39,
+   "pos_err_at_result_m": 0.0965,
+   "yaw_err_at_result_deg": 5.47,
+   "path_m": 57.86,
+   "reverse_m": 0.005,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.06,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.47,
+   "peak_decel_mps2": 0.82,
+   "max_tilt_deg": 0.9,
+   "start": [
+    16.598,
+    -5.05,
+    -177.1
+   ],
+   "end": [
+    7.947,
+    -8.707,
+    -177.5
+   ],
+   "est_s": 118.4,
+   "route_m": 56.7
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 137.0,
+   "time_s": 50.43,
+   "pos_err_m": 0.116,
+   "yaw_err_deg": 0.7,
+   "pos_err_at_result_m": 0.113,
+   "yaw_err_at_result_deg": 4.0,
+   "path_m": 20.95,
+   "reverse_m": 0.011,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.11,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.44,
+   "peak_decel_mps2": 0.95,
+   "max_tilt_deg": 0.9,
+   "start": [
+    7.946,
+    -8.707,
+    -177.6
+   ],
+   "end": [
+    -3.448,
+    1.753,
+    -4.0
+   ],
+   "est_s": 45.7,
+   "route_m": 20.34
+  },
+  {
+   "name": "back_0.5",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.4,
+   "time_s": 13.83,
+   "pos_err_m": 0.1238,
+   "yaw_err_deg": 1.52,
+   "pos_err_at_result_m": 0.1219,
+   "yaw_err_at_result_deg": 4.18,
+   "path_m": 2.55,
+   "reverse_m": 0.016,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.55,
+   "peak_decel_mps2": 0.94,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -3.448,
+    1.753,
+    -4.0
+   ],
+   "end": [
+    -3.952,
+    1.788,
+    -4.8
+   ],
+   "est_s": 5.8,
+   "route_m": 0.4,
+   "synthetic": true
+  }
+ ],
+ "jb_J2_r1b": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 23.73,
+   "pos_err_m": 0.1099,
+   "yaw_err_deg": 5.61,
+   "pos_err_at_result_m": 0.1093,
+   "yaw_err_at_result_deg": 6.44,
+   "path_m": 6.21,
+   "reverse_m": 0.048,
+   "reverse_max_m": 0.012,
+   "spin_rad": 0.44,
+   "recoveries": 1,
+   "peak_accel_mps2": 0.96,
+   "peak_decel_mps2": 0.57,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.454,
+    1.699,
+    -8.9
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.3,
+   "time_s": 35.63,
+   "pos_err_m": 0.0312,
+   "yaw_err_deg": 1.52,
+   "pos_err_at_result_m": 0.0388,
+   "yaw_err_at_result_deg": 2.72,
+   "path_m": 14.77,
+   "reverse_m": 0.018,
+   "reverse_max_m": 0.01,
+   "spin_rad": 0.11,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.05,
+   "peak_decel_mps2": 0.47,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.454,
+    1.699,
+    -8.9
+   ],
+   "end": [
+    5.943,
+    -4.835,
+    1.2
+   ],
+   "est_s": 33.4,
+   "route_m": 14.21
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.9,
+   "time_s": 5.57,
+   "pos_err_m": 0.052,
+   "yaw_err_deg": 2.97,
+   "pos_err_at_result_m": 0.0515,
+   "yaw_err_at_result_deg": 1.41,
+   "path_m": 0.65,
+   "reverse_m": 0.019,
+   "reverse_max_m": 0.013,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.31,
+   "peak_decel_mps2": 0.52,
+   "max_tilt_deg": 0.3,
+   "start": [
+    5.943,
+    -4.835,
+    1.2
+   ],
+   "end": [
+    6.378,
+    -4.867,
+    2.6
+   ],
+   "est_s": 6.0,
+   "route_m": 0.48
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.7,
+   "time_s": 6.93,
+   "pos_err_m": 0.0415,
+   "yaw_err_deg": 2.85,
+   "pos_err_at_result_m": 0.0367,
+   "yaw_err_at_result_deg": 1.42,
+   "path_m": 1.14,
+   "reverse_m": 0.012,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.1,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.34,
+   "peak_decel_mps2": 0.64,
+   "max_tilt_deg": 0.4,
+   "start": [
+    6.378,
+    -4.867,
+    2.6
+   ],
+   "end": [
+    7.303,
+    -4.88,
+    2.5
+   ],
+   "est_s": 6.9,
+   "route_m": 0.96
+  },
+  {
+   "name": "lane_run",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 69.7,
+   "time_s": 30.17,
+   "pos_err_m": 0.0695,
+   "yaw_err_deg": 3.31,
+   "pos_err_at_result_m": 0.0652,
+   "yaw_err_at_result_deg": 1.55,
+   "path_m": 9.52,
+   "reverse_m": 0.049,
+   "reverse_max_m": 0.013,
+   "spin_rad": 0.58,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.41,
+   "peak_decel_mps2": 0.49,
+   "max_tilt_deg": 0.5,
+   "start": [
+    7.303,
+    -4.88,
+    2.5
+   ],
+   "end": [
+    16.355,
+    -4.912,
+    -3.7
+   ],
+   "est_s": 23.2,
+   "route_m": 9.12
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "TIMEOUT",
+   "error_code": 104,
+   "timeout_s": 43.1,
+   "time_s": 43.13,
+   "pos_err_m": 0.5185,
+   "yaw_err_deg": 150.75,
+   "pos_err_at_result_m": 0.518,
+   "yaw_err_at_result_deg": 150.53,
+   "path_m": 5.78,
+   "reverse_m": 0.095,
+   "reverse_max_m": 0.028,
+   "spin_rad": 0.59,
+   "recoveries": 13,
+   "peak_accel_mps2": 1.46,
+   "peak_decel_mps2": 1.15,
+   "max_tilt_deg": 0.3,
+   "start": [
+    16.355,
+    -4.912,
+    -3.7
+   ],
+   "end": [
+    16.234,
+    -4.622,
+    29.1
+   ],
+   "est_s": 14.4,
+   "route_m": 4.69
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "ABORTED",
+   "error_code": 104,
+   "timeout_s": 354.8,
+   "time_s": 20.0,
+   "pos_err_m": 9.3318,
+   "yaw_err_deg": 149.96,
+   "pos_err_at_result_m": 9.3317,
+   "yaw_err_at_result_deg": 149.96,
+   "path_m": 0.17,
+   "reverse_m": 0.072,
+   "reverse_max_m": 0.004,
+   "spin_rad": 0.24,
+   "recoveries": 21,
+   "peak_accel_mps2": 0.11,
+   "peak_decel_mps2": 0.15,
+   "max_tilt_deg": 0.2,
+   "start": [
+    16.236,
+    -4.621,
+    29.1
+   ],
+   "end": [
+    16.241,
+    -4.624,
+    30.1
+   ],
+   "est_s": 118.3,
+   "route_m": 56.64
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "ABORTED",
+   "error_code": 104,
+   "timeout_s": 192.2,
+   "time_s": 20.0,
+   "pos_err_m": 20.5863,
+   "yaw_err_deg": 35.05,
+   "pos_err_at_result_m": 20.5851,
+   "yaw_err_at_result_deg": 34.77,
+   "path_m": 0.15,
+   "reverse_m": 0.06,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.22,
+   "recoveries": 21,
+   "peak_accel_mps2": 0.12,
+   "peak_decel_mps2": 0.15,
+   "max_tilt_deg": 0.1,
+   "start": [
+    16.24,
+    -4.625,
+    30.3
+   ],
+   "end": [
+    16.245,
+    -4.627,
+    31.8
+   ],
+   "est_s": 64.1,
+   "route_m": 29.53
+  },
+  {
+   "name": "back_0.5",
+   "status": "ABORTED",
+   "error_code": 104,
+   "timeout_s": 141.4,
+   "time_s": 20.0,
+   "pos_err_m": 21.1367,
+   "yaw_err_deg": 69.78,
+   "pos_err_at_result_m": 21.1364,
+   "yaw_err_at_result_deg": 69.91,
+   "path_m": 0.22,
+   "reverse_m": 0.069,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.23,
+   "recoveries": 21,
+   "peak_accel_mps2": 0.2,
+   "peak_decel_mps2": 0.29,
+   "max_tilt_deg": 0.4,
+   "start": [
+    16.246,
+    -4.627,
+    31.7
+   ],
+   "end": [
+    16.299,
+    -4.679,
+    66.5
+   ],
+   "est_s": 47.1,
+   "route_m": 21.07,
+   "synthetic": true
+  }
+ ],
+ "jb_J3_r1": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 28.13,
+   "pos_err_m": 0.0818,
+   "yaw_err_deg": 3.67,
+   "pos_err_at_result_m": 0.0739,
+   "yaw_err_at_result_deg": 0.17,
+   "path_m": 6.29,
+   "reverse_m": 0.034,
+   "reverse_max_m": 0.011,
+   "spin_rad": 0.48,
+   "recoveries": 1,
+   "peak_accel_mps2": 0.52,
+   "peak_decel_mps2": 1.19,
+   "max_tilt_deg": 0.6,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.397,
+    1.764,
+    -6.9
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.5,
+   "time_s": 35.07,
+   "pos_err_m": 0.0299,
+   "yaw_err_deg": 1.56,
+   "pos_err_at_result_m": 0.0191,
+   "yaw_err_at_result_deg": 3.1,
+   "path_m": 14.78,
+   "reverse_m": 0.004,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.03,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.86,
+   "peak_decel_mps2": 0.62,
+   "max_tilt_deg": 0.6,
+   "start": [
+    -3.397,
+    1.764,
+    -6.9
+   ],
+   "end": [
+    5.966,
+    -4.874,
+    1.2
+   ],
+   "est_s": 33.5,
+   "route_m": 14.25
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.8,
+   "time_s": 5.23,
+   "pos_err_m": 0.0371,
+   "yaw_err_deg": 1.57,
+   "pos_err_at_result_m": 0.0298,
+   "yaw_err_at_result_deg": 2.64,
+   "path_m": 0.63,
+   "reverse_m": 0.01,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.08,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.17,
+   "peak_decel_mps2": 0.47,
+   "max_tilt_deg": 0.4,
+   "start": [
+    5.966,
+    -4.874,
+    1.2
+   ],
+   "end": [
+    6.401,
+    -4.822,
+    -1.9
+   ],
+   "est_s": 5.9,
+   "route_m": 0.46
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.6,
+   "time_s": 5.67,
+   "pos_err_m": 0.0305,
+   "yaw_err_deg": 2.92,
+   "pos_err_at_result_m": 0.0219,
+   "yaw_err_at_result_deg": 1.73,
+   "path_m": 1.06,
+   "reverse_m": 0.018,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.06,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.41,
+   "peak_decel_mps2": 0.64,
+   "max_tilt_deg": 0.2,
+   "start": [
+    6.401,
+    -4.822,
+    -1.9
+   ],
+   "end": [
+    7.312,
+    -4.873,
+    2.6
+   ],
+   "est_s": 6.9,
+   "route_m": 0.94
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.7,
+   "time_s": 20.6,
+   "pos_err_m": 0.0121,
+   "yaw_err_deg": 1.6,
+   "pos_err_at_result_m": 0.0073,
+   "yaw_err_at_result_deg": 2.8,
+   "path_m": 9.15,
+   "reverse_m": 0.001,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.01,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.44,
+   "peak_decel_mps2": 0.53,
+   "max_tilt_deg": 0.8,
+   "start": [
+    7.312,
+    -4.873,
+    2.6
+   ],
+   "end": [
+    16.422,
+    -4.923,
+    1.2
+   ],
+   "est_s": 23.2,
+   "route_m": 9.11
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 42.7,
+   "time_s": 22.47,
+   "pos_err_m": 0.0295,
+   "yaw_err_deg": 1.35,
+   "pos_err_at_result_m": 0.033,
+   "yaw_err_at_result_deg": 3.2,
+   "path_m": 6.23,
+   "reverse_m": 0.011,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.34,
+   "peak_decel_mps2": 0.84,
+   "max_tilt_deg": 0.5,
+   "start": [
+    16.422,
+    -4.923,
+    1.2
+   ],
+   "end": [
+    16.539,
+    -5.075,
+    178.5
+   ],
+   "est_s": 14.2,
+   "route_m": 4.62
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 354.9,
+   "time_s": 128.43,
+   "pos_err_m": 0.0201,
+   "yaw_err_deg": 0.99,
+   "pos_err_at_result_m": 0.0071,
+   "yaw_err_at_result_deg": 3.26,
+   "path_m": 58.08,
+   "reverse_m": 0.005,
+   "reverse_max_m": 0.001,
+   "spin_rad": 0.1,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.48,
+   "peak_decel_mps2": 0.95,
+   "max_tilt_deg": 1.0,
+   "start": [
+    16.539,
+    -5.075,
+    178.5
+   ],
+   "end": [
+    7.837,
+    -8.694,
+    -178.9
+   ],
+   "est_s": 118.3,
+   "route_m": 56.64
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 136.4,
+   "time_s": 57.03,
+   "pos_err_m": 0.0995,
+   "yaw_err_deg": 3.55,
+   "pos_err_at_result_m": 0.0929,
+   "yaw_err_at_result_deg": 0.99,
+   "path_m": 21.2,
+   "reverse_m": 0.043,
+   "reverse_max_m": 0.012,
+   "spin_rad": 0.43,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.48,
+   "peak_decel_mps2": 1.01,
+   "max_tilt_deg": 0.6,
+   "start": [
+    7.837,
+    -8.694,
+    -178.9
+   ],
+   "end": [
+    -3.422,
+    1.763,
+    -6.8
+   ],
+   "est_s": 45.5,
+   "route_m": 20.23
+  },
+  {
+   "name": "back_0.5",
+   "status": "TIMEOUT",
+   "error_code": 0,
+   "timeout_s": 17.5,
+   "time_s": 17.53,
+   "pos_err_m": 0.0802,
+   "yaw_err_deg": 1.29,
+   "pos_err_at_result_m": 0.0887,
+   "yaw_err_at_result_deg": 5.77,
+   "path_m": 2.74,
+   "reverse_m": 0.023,
+   "reverse_max_m": 0.011,
+   "spin_rad": 0.28,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.51,
+   "peak_decel_mps2": 0.78,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -3.422,
+    1.763,
+    -6.8
+   ],
+   "end": [
+    -3.895,
+    1.789,
+    -4.6
+   ],
+   "est_s": 5.8,
+   "route_m": 0.42,
+   "synthetic": true
+  }
+ ],
+ "jb_J6_r1": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 28.6,
+   "pos_err_m": 0.0643,
+   "yaw_err_deg": 5.46,
+   "pos_err_at_result_m": 0.0601,
+   "yaw_err_at_result_deg": 1.49,
+   "path_m": 7.46,
+   "reverse_m": 0.043,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.43,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.1,
+   "peak_decel_mps2": 0.84,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.39,
+    1.747,
+    -8.7
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.4,
+   "time_s": 37.27,
+   "pos_err_m": 0.039,
+   "yaw_err_deg": 0.91,
+   "pos_err_at_result_m": 0.0343,
+   "yaw_err_at_result_deg": 3.27,
+   "path_m": 14.94,
+   "reverse_m": 0.017,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.12,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.93,
+   "peak_decel_mps2": 0.71,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.39,
+    1.747,
+    -8.7
+   ],
+   "end": [
+    5.941,
+    -4.868,
+    0.6
+   ],
+   "est_s": 33.5,
+   "route_m": 14.24
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.9,
+   "time_s": 4.53,
+   "pos_err_m": 0.0297,
+   "yaw_err_deg": 2.18,
+   "pos_err_at_result_m": 0.0198,
+   "yaw_err_at_result_deg": 2.21,
+   "path_m": 0.6,
+   "reverse_m": 0.008,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.06,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.2,
+   "peak_decel_mps2": 0.46,
+   "max_tilt_deg": 0.2,
+   "start": [
+    5.941,
+    -4.868,
+    0.6
+   ],
+   "end": [
+    6.426,
+    -4.819,
+    -2.5
+   ],
+   "est_s": 6.0,
+   "route_m": 0.49
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.5,
+   "time_s": 2.77,
+   "pos_err_m": 0.0377,
+   "yaw_err_deg": 1.7,
+   "pos_err_at_result_m": 0.069,
+   "yaw_err_at_result_deg": 1.68,
+   "path_m": 0.87,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.36,
+   "peak_decel_mps2": 0.56,
+   "max_tilt_deg": 0.2,
+   "start": [
+    6.426,
+    -4.819,
+    -2.5
+   ],
+   "end": [
+    7.298,
+    -4.853,
+    -2.1
+   ],
+   "est_s": 6.8,
+   "route_m": 0.91
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.8,
+   "time_s": 20.73,
+   "pos_err_m": 0.0251,
+   "yaw_err_deg": 1.0,
+   "pos_err_at_result_m": 0.0148,
+   "yaw_err_at_result_deg": 3.42,
+   "path_m": 9.16,
+   "reverse_m": 0.002,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.01,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.43,
+   "peak_decel_mps2": 0.58,
+   "max_tilt_deg": 0.8,
+   "start": [
+    7.298,
+    -4.853,
+    -2.1
+   ],
+   "end": [
+    16.418,
+    -4.935,
+    0.6
+   ],
+   "est_s": 23.3,
+   "route_m": 9.13
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 42.8,
+   "time_s": 26.07,
+   "pos_err_m": 0.0324,
+   "yaw_err_deg": 0.88,
+   "pos_err_at_result_m": 0.0313,
+   "yaw_err_at_result_deg": 3.46,
+   "path_m": 7.91,
+   "reverse_m": 0.015,
+   "reverse_max_m": 0.011,
+   "spin_rad": 0.03,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.18,
+   "peak_decel_mps2": 1.02,
+   "max_tilt_deg": 0.5,
+   "start": [
+    16.417,
+    -4.935,
+    0.6
+   ],
+   "end": [
+    16.541,
+    -5.078,
+    179.0
+   ],
+   "est_s": 14.3,
+   "route_m": 4.63
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 354.9,
+   "time_s": 128.07,
+   "pos_err_m": 0.0425,
+   "yaw_err_deg": 16.7,
+   "pos_err_at_result_m": 0.0556,
+   "yaw_err_at_result_deg": 2.49,
+   "path_m": 58.88,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.4,
+   "peak_decel_mps2": 0.76,
+   "max_tilt_deg": 0.9,
+   "start": [
+    16.542,
+    -5.078,
+    179.0
+   ],
+   "end": [
+    7.85,
+    -8.752,
+    163.4
+   ],
+   "est_s": 118.3,
+   "route_m": 56.64
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 136.5,
+   "time_s": 61.27,
+   "pos_err_m": 0.0399,
+   "yaw_err_deg": 1.35,
+   "pos_err_at_result_m": 0.0515,
+   "yaw_err_at_result_deg": 6.3,
+   "path_m": 24.95,
+   "reverse_m": 0.01,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.23,
+   "peak_decel_mps2": 1.09,
+   "max_tilt_deg": 0.8,
+   "start": [
+    7.85,
+    -8.752,
+    163.4
+   ],
+   "end": [
+    -3.371,
+    1.731,
+    -4.6
+   ],
+   "est_s": 45.5,
+   "route_m": 20.25
+  },
+  {
+   "name": "back_0.5",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.8,
+   "time_s": 17.03,
+   "pos_err_m": 0.0299,
+   "yaw_err_deg": 1.73,
+   "pos_err_at_result_m": 0.0387,
+   "yaw_err_at_result_deg": 5.86,
+   "path_m": 4.15,
+   "reverse_m": 0.007,
+   "reverse_max_m": 0.004,
+   "spin_rad": 0.03,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.06,
+   "peak_decel_mps2": 0.78,
+   "max_tilt_deg": 0.5,
+   "start": [
+    -3.371,
+    1.731,
+    -4.6
+   ],
+   "end": [
+    -3.863,
+    1.751,
+    -5.0
+   ],
+   "est_s": 5.9,
+   "route_m": 0.47,
+   "synthetic": true
+  }
+ ],
+ "jb_J6_r2": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 28.8,
+   "pos_err_m": 0.0578,
+   "yaw_err_deg": 3.65,
+   "pos_err_at_result_m": 0.0548,
+   "yaw_err_at_result_deg": 0.21,
+   "path_m": 7.46,
+   "reverse_m": 0.048,
+   "reverse_max_m": 0.012,
+   "spin_rad": 0.5,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.07,
+   "peak_decel_mps2": 0.76,
+   "max_tilt_deg": 0.6,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.394,
+    1.73,
+    -6.9
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.3,
+   "time_s": 36.5,
+   "pos_err_m": 0.0379,
+   "yaw_err_deg": 1.13,
+   "pos_err_at_result_m": 0.0272,
+   "yaw_err_at_result_deg": 3.46,
+   "path_m": 15.0,
+   "reverse_m": 0.004,
+   "reverse_max_m": 0.001,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.92,
+   "peak_decel_mps2": 0.7,
+   "max_tilt_deg": 0.8,
+   "start": [
+    -3.394,
+    1.73,
+    -6.9
+   ],
+   "end": [
+    5.976,
+    -4.883,
+    0.8
+   ],
+   "est_s": 33.4,
+   "route_m": 14.22
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.7,
+   "time_s": 5.5,
+   "pos_err_m": 0.0548,
+   "yaw_err_deg": 2.65,
+   "pos_err_at_result_m": 0.0493,
+   "yaw_err_at_result_deg": 2.08,
+   "path_m": 0.64,
+   "reverse_m": 0.021,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.08,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.22,
+   "peak_decel_mps2": 0.53,
+   "max_tilt_deg": 0.3,
+   "start": [
+    5.976,
+    -4.883,
+    0.8
+   ],
+   "end": [
+    6.38,
+    -4.82,
+    -3.0
+   ],
+   "est_s": 5.9,
+   "route_m": 0.45
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.7,
+   "time_s": 6.07,
+   "pos_err_m": 0.0232,
+   "yaw_err_deg": 1.94,
+   "pos_err_at_result_m": 0.0143,
+   "yaw_err_at_result_deg": 2.4,
+   "path_m": 1.11,
+   "reverse_m": 0.009,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.31,
+   "peak_decel_mps2": 0.65,
+   "max_tilt_deg": 0.3,
+   "start": [
+    6.38,
+    -4.82,
+    -3.0
+   ],
+   "end": [
+    7.326,
+    -4.833,
+    -2.3
+   ],
+   "est_s": 6.9,
+   "route_m": 0.96
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.6,
+   "time_s": 23.17,
+   "pos_err_m": 0.0493,
+   "yaw_err_deg": 1.56,
+   "pos_err_at_result_m": 0.0418,
+   "yaw_err_at_result_deg": 2.76,
+   "path_m": 9.28,
+   "reverse_m": 0.009,
+   "reverse_max_m": 0.004,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.36,
+   "peak_decel_mps2": 0.44,
+   "max_tilt_deg": 0.6,
+   "start": [
+    7.326,
+    -4.833,
+    -2.3
+   ],
+   "end": [
+    16.383,
+    -4.938,
+    1.2
+   ],
+   "est_s": 23.2,
+   "route_m": 9.1
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 43.0,
+   "time_s": 25.7,
+   "pos_err_m": 0.031,
+   "yaw_err_deg": 0.94,
+   "pos_err_at_result_m": 0.0393,
+   "yaw_err_at_result_deg": 3.4,
+   "path_m": 7.92,
+   "reverse_m": 0.015,
+   "reverse_max_m": 0.004,
+   "spin_rad": 0.04,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.17,
+   "peak_decel_mps2": 1.04,
+   "max_tilt_deg": 0.8,
+   "start": [
+    16.384,
+    -4.938,
+    1.2
+   ],
+   "end": [
+    16.545,
+    -5.06,
+    -179.2
+   ],
+   "est_s": 14.3,
+   "route_m": 4.66
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 354.9,
+   "time_s": 128.27,
+   "pos_err_m": 0.06,
+   "yaw_err_deg": 24.17,
+   "pos_err_at_result_m": 0.0518,
+   "yaw_err_at_result_deg": 2.29,
+   "path_m": 58.9,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.01,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.5,
+   "peak_decel_mps2": 0.89,
+   "max_tilt_deg": 0.7,
+   "start": [
+    16.545,
+    -5.06,
+    -179.2
+   ],
+   "end": [
+    7.848,
+    -8.649,
+    -155.8
+   ],
+   "est_s": 118.3,
+   "route_m": 56.65
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 136.5,
+   "time_s": 62.07,
+   "pos_err_m": 0.0375,
+   "yaw_err_deg": 1.17,
+   "pos_err_at_result_m": 0.0459,
+   "yaw_err_at_result_deg": 5.86,
+   "path_m": 25.01,
+   "reverse_m": 0.008,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.12,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.14,
+   "peak_decel_mps2": 1.12,
+   "max_tilt_deg": 0.9,
+   "start": [
+    7.848,
+    -8.649,
+    -155.8
+   ],
+   "end": [
+    -3.375,
+    1.722,
+    -4.5
+   ],
+   "est_s": 45.5,
+   "route_m": 20.25
+  },
+  {
+   "name": "back_0.5",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.8,
+   "time_s": 17.07,
+   "pos_err_m": 0.0383,
+   "yaw_err_deg": 1.24,
+   "pos_err_at_result_m": 0.0505,
+   "yaw_err_at_result_deg": 3.46,
+   "path_m": 4.19,
+   "reverse_m": 0.011,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.06,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.05,
+   "peak_decel_mps2": 0.88,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.375,
+    1.722,
+    -4.5
+   ],
+   "end": [
+    -3.869,
+    1.756,
+    -2.0
+   ],
+   "est_s": 5.9,
+   "route_m": 0.47,
+   "synthetic": true
+  }
+ ],
+ "jb_J6_r3": [
+  {
+   "name": "warmup_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 43.2,
+   "time_s": 23.47,
+   "pos_err_m": 0.0548,
+   "yaw_err_deg": 4.39,
+   "pos_err_at_result_m": 0.0496,
+   "yaw_err_at_result_deg": 0.3,
+   "path_m": 7.28,
+   "reverse_m": 0.015,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.99,
+   "peak_decel_mps2": 0.66,
+   "max_tilt_deg": 0.5,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.378,
+    1.745,
+    -7.7
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.4,
+   "time_s": 36.73,
+   "pos_err_m": 0.0319,
+   "yaw_err_deg": 1.38,
+   "pos_err_at_result_m": 0.0264,
+   "yaw_err_at_result_deg": 3.11,
+   "path_m": 14.95,
+   "reverse_m": 0.013,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.94,
+   "peak_decel_mps2": 0.56,
+   "max_tilt_deg": 0.6,
+   "start": [
+    -3.378,
+    1.745,
+    -7.7
+   ],
+   "end": [
+    5.942,
+    -4.836,
+    -1.7
+   ],
+   "est_s": 33.5,
+   "route_m": 14.23
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.9,
+   "time_s": 2.07,
+   "pos_err_m": 0.0198,
+   "yaw_err_deg": 8.65,
+   "pos_err_at_result_m": 0.0433,
+   "yaw_err_at_result_deg": 0.57,
+   "path_m": 0.5,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.27,
+   "peak_decel_mps2": 0.45,
+   "max_tilt_deg": 0.2,
+   "start": [
+    5.942,
+    -4.836,
+    -1.7
+   ],
+   "end": [
+    6.432,
+    -4.867,
+    8.3
+   ],
+   "est_s": 6.0,
+   "route_m": 0.48
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.4,
+   "time_s": 2.83,
+   "pos_err_m": 0.0674,
+   "yaw_err_deg": 30.35,
+   "pos_err_at_result_m": 0.0681,
+   "yaw_err_at_result_deg": 5.86,
+   "path_m": 0.92,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.01,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.23,
+   "peak_decel_mps2": 0.58,
+   "max_tilt_deg": 0.4,
+   "start": [
+    6.432,
+    -4.867,
+    8.3
+   ],
+   "end": [
+    7.324,
+    -4.921,
+    30.0
+   ],
+   "est_s": 6.8,
+   "route_m": 0.9
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.6,
+   "time_s": 23.1,
+   "pos_err_m": 0.0491,
+   "yaw_err_deg": 1.91,
+   "pos_err_at_result_m": 0.0375,
+   "yaw_err_at_result_deg": 3.14,
+   "path_m": 9.31,
+   "reverse_m": 0.014,
+   "reverse_max_m": 0.011,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.03,
+   "peak_decel_mps2": 0.53,
+   "max_tilt_deg": 0.7,
+   "start": [
+    7.324,
+    -4.921,
+    30.0
+   ],
+   "end": [
+    16.419,
+    -4.96,
+    1.5
+   ],
+   "est_s": 23.2,
+   "route_m": 9.1
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 42.8,
+   "time_s": 26.17,
+   "pos_err_m": 0.0277,
+   "yaw_err_deg": 1.02,
+   "pos_err_at_result_m": 0.0285,
+   "yaw_err_at_result_deg": 3.51,
+   "path_m": 7.93,
+   "reverse_m": 0.022,
+   "reverse_max_m": 0.018,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.21,
+   "peak_decel_mps2": 1.06,
+   "max_tilt_deg": 0.6,
+   "start": [
+    16.419,
+    -4.96,
+    1.5
+   ],
+   "end": [
+    16.542,
+    -5.057,
+    -179.1
+   ],
+   "est_s": 14.3,
+   "route_m": 4.63
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 354.9,
+   "time_s": 131.03,
+   "pos_err_m": 0.0409,
+   "yaw_err_deg": 1.65,
+   "pos_err_at_result_m": 0.0368,
+   "yaw_err_at_result_deg": 3.37,
+   "path_m": 58.95,
+   "reverse_m": 0.012,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.59,
+   "peak_decel_mps2": 0.72,
+   "max_tilt_deg": 0.8,
+   "start": [
+    16.542,
+    -5.057,
+    -179.1
+   ],
+   "end": [
+    7.882,
+    -8.736,
+    178.4
+   ],
+   "est_s": 118.3,
+   "route_m": 56.64
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 136.7,
+   "time_s": 62.4,
+   "pos_err_m": 0.0477,
+   "yaw_err_deg": 1.41,
+   "pos_err_at_result_m": 0.0505,
+   "yaw_err_at_result_deg": 0.77,
+   "path_m": 25.05,
+   "reverse_m": 0.019,
+   "reverse_max_m": 0.01,
+   "spin_rad": 0.08,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.44,
+   "peak_decel_mps2": 1.08,
+   "max_tilt_deg": 0.7,
+   "start": [
+    7.882,
+    -8.736,
+    178.4
+   ],
+   "end": [
+    -3.388,
+    1.721,
+    -1.9
+   ],
+   "est_s": 45.6,
+   "route_m": 20.28
+  },
+  {
+   "name": "back_0.5",
+   "status": "TIMEOUT",
+   "error_code": 0,
+   "timeout_s": 17.7,
+   "time_s": 17.73,
+   "pos_err_m": 0.0582,
+   "yaw_err_deg": 1.75,
+   "pos_err_at_result_m": 0.0577,
+   "yaw_err_at_result_deg": 2.22,
+   "path_m": 4.11,
+   "reverse_m": 0.03,
+   "reverse_max_m": 0.019,
+   "spin_rad": 0.08,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.08,
+   "peak_decel_mps2": 0.85,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.388,
+    1.721,
+    -1.9
+   ],
+   "end": [
+    -3.897,
+    1.706,
+    -1.5
+   ],
+   "est_s": 5.9,
+   "route_m": 0.46,
+   "synthetic": true
+  }
+ ],
+ "jb_base_r1": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 28.67,
+   "pos_err_m": 0.0741,
+   "yaw_err_deg": 3.2,
+   "pos_err_at_result_m": 0.0777,
+   "yaw_err_at_result_deg": 5.51,
+   "path_m": 6.27,
+   "reverse_m": 0.032,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.48,
+   "recoveries": 1,
+   "peak_accel_mps2": 0.53,
+   "peak_decel_mps2": 0.93,
+   "max_tilt_deg": 0.5,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.38,
+    1.767,
+    -6.5
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.5,
+   "time_s": 34.73,
+   "pos_err_m": 0.0398,
+   "yaw_err_deg": 6.24,
+   "pos_err_at_result_m": 0.0332,
+   "yaw_err_at_result_deg": 2.75,
+   "path_m": 14.75,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.02,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.9,
+   "peak_decel_mps2": 0.68,
+   "max_tilt_deg": 0.8,
+   "start": [
+    -3.38,
+    1.767,
+    -6.5
+   ],
+   "end": [
+    5.947,
+    -4.876,
+    5.9
+   ],
+   "est_s": 33.5,
+   "route_m": 14.25
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 17.9,
+   "time_s": 4.97,
+   "pos_err_m": 0.0361,
+   "yaw_err_deg": 2.82,
+   "pos_err_at_result_m": 0.0348,
+   "yaw_err_at_result_deg": 2.01,
+   "path_m": 0.62,
+   "reverse_m": 0.006,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.18,
+   "peak_decel_mps2": 0.39,
+   "max_tilt_deg": 0.2,
+   "start": [
+    5.947,
+    -4.876,
+    5.9
+   ],
+   "end": [
+    6.394,
+    -4.864,
+    2.5
+   ],
+   "est_s": 6.0,
+   "route_m": 0.48
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.6,
+   "time_s": 6.83,
+   "pos_err_m": 0.062,
+   "yaw_err_deg": 2.47,
+   "pos_err_at_result_m": 0.0564,
+   "yaw_err_at_result_deg": 1.51,
+   "path_m": 1.1,
+   "reverse_m": 0.016,
+   "reverse_max_m": 0.005,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.32,
+   "peak_decel_mps2": 0.57,
+   "max_tilt_deg": 0.3,
+   "start": [
+    6.394,
+    -4.864,
+    2.5
+   ],
+   "end": [
+    7.28,
+    -4.882,
+    2.1
+   ],
+   "est_s": 6.9,
+   "route_m": 0.94
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.9,
+   "time_s": 23.87,
+   "pos_err_m": 0.0522,
+   "yaw_err_deg": 1.51,
+   "pos_err_at_result_m": 0.0431,
+   "yaw_err_at_result_deg": 3.3,
+   "path_m": 9.38,
+   "reverse_m": 0.023,
+   "reverse_max_m": 0.012,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.37,
+   "peak_decel_mps2": 0.46,
+   "max_tilt_deg": 0.5,
+   "start": [
+    7.28,
+    -4.882,
+    2.1
+   ],
+   "end": [
+    16.375,
+    -4.926,
+    1.2
+   ],
+   "est_s": 23.3,
+   "route_m": 9.15
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 43.0,
+   "time_s": 27.27,
+   "pos_err_m": 0.052,
+   "yaw_err_deg": 1.8,
+   "pos_err_at_result_m": 0.0508,
+   "yaw_err_at_result_deg": 2.34,
+   "path_m": 6.43,
+   "reverse_m": 0.036,
+   "reverse_max_m": 0.016,
+   "spin_rad": 0.37,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.29,
+   "peak_decel_mps2": 0.79,
+   "max_tilt_deg": 0.6,
+   "start": [
+    16.375,
+    -4.926,
+    1.1
+   ],
+   "end": [
+    16.564,
+    -5.044,
+    -178.3
+   ],
+   "est_s": 14.3,
+   "route_m": 4.67
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 355.0,
+   "time_s": 126.67,
+   "pos_err_m": 0.0215,
+   "yaw_err_deg": 1.71,
+   "pos_err_at_result_m": 0.0214,
+   "yaw_err_at_result_deg": 2.85,
+   "path_m": 57.91,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.47,
+   "peak_decel_mps2": 1.06,
+   "max_tilt_deg": 0.9,
+   "start": [
+    16.564,
+    -5.044,
+    -178.3
+   ],
+   "end": [
+    7.862,
+    -8.727,
+    178.4
+   ],
+   "est_s": 118.3,
+   "route_m": 56.67
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 136.5,
+   "time_s": 57.17,
+   "pos_err_m": 0.0847,
+   "yaw_err_deg": 5.94,
+   "pos_err_at_result_m": 0.0835,
+   "yaw_err_at_result_deg": 5.22,
+   "path_m": 21.2,
+   "reverse_m": 0.029,
+   "reverse_max_m": 0.007,
+   "spin_rad": 0.32,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.23,
+   "peak_decel_mps2": 0.79,
+   "max_tilt_deg": 1.2,
+   "start": [
+    7.862,
+    -8.727,
+    178.4
+   ],
+   "end": [
+    -3.398,
+    1.767,
+    -9.2
+   ],
+   "est_s": 45.5,
+   "route_m": 20.26
+  },
+  {
+   "name": "back_0.5",
+   "status": "TIMEOUT",
+   "error_code": 0,
+   "timeout_s": 17.7,
+   "time_s": 17.7,
+   "pos_err_m": 0.0743,
+   "yaw_err_deg": 0.11,
+   "pos_err_at_result_m": 0.0816,
+   "yaw_err_at_result_deg": 4.08,
+   "path_m": 2.73,
+   "reverse_m": 0.022,
+   "reverse_max_m": 0.009,
+   "spin_rad": 0.23,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.76,
+   "peak_decel_mps2": 0.84,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -3.398,
+    1.767,
+    -9.2
+   ],
+   "end": [
+    -3.901,
+    1.775,
+    -3.2
+   ],
+   "est_s": 5.9,
+   "route_m": 0.45,
+   "synthetic": true
+  }
+ ],
+ "jb_base_r2": [
+  {
+   "name": "warmup_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 43.2,
+   "time_s": 28.93,
+   "pos_err_m": 0.0729,
+   "yaw_err_deg": 4.63,
+   "pos_err_at_result_m": 0.0657,
+   "yaw_err_at_result_deg": 0.75,
+   "path_m": 6.28,
+   "reverse_m": 0.042,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.51,
+   "recoveries": 1,
+   "peak_accel_mps2": 0.53,
+   "peak_decel_mps2": 1.19,
+   "max_tilt_deg": 0.4,
+   "start": [
+    -0.001,
+    -1.6,
+    0.0
+   ],
+   "end": [
+    -3.395,
+    1.754,
+    -7.9
+   ],
+   "est_s": 14.4,
+   "route_m": 4.7
+  },
+  {
+   "name": "staging_to_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 100.5,
+   "time_s": 37.87,
+   "pos_err_m": 0.0518,
+   "yaw_err_deg": 0.88,
+   "pos_err_at_result_m": 0.0485,
+   "yaw_err_at_result_deg": 3.14,
+   "path_m": 14.92,
+   "reverse_m": 0.01,
+   "reverse_max_m": 0.003,
+   "spin_rad": 0.09,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.79,
+   "peak_decel_mps2": 0.64,
+   "max_tilt_deg": 0.7,
+   "start": [
+    -3.395,
+    1.754,
+    -7.9
+   ],
+   "end": [
+    5.929,
+    -4.874,
+    0.5
+   ],
+   "est_s": 33.5,
+   "route_m": 14.24
+  },
+  {
+   "name": "step_0.45",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 18.0,
+   "time_s": 4.73,
+   "pos_err_m": 0.0444,
+   "yaw_err_deg": 2.11,
+   "pos_err_at_result_m": 0.0345,
+   "yaw_err_at_result_deg": 2.31,
+   "path_m": 0.6,
+   "reverse_m": 0.008,
+   "reverse_max_m": 0.006,
+   "spin_rad": 0.05,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.14,
+   "peak_decel_mps2": 0.49,
+   "max_tilt_deg": 0.3,
+   "start": [
+    5.929,
+    -4.874,
+    0.5
+   ],
+   "end": [
+    6.395,
+    -4.818,
+    -2.5
+   ],
+   "est_s": 6.0,
+   "route_m": 0.5
+  },
+  {
+   "name": "step_0.9",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 20.7,
+   "time_s": 2.8,
+   "pos_err_m": 0.0566,
+   "yaw_err_deg": 0.52,
+   "pos_err_at_result_m": 0.0721,
+   "yaw_err_at_result_deg": 0.88,
+   "path_m": 0.89,
+   "reverse_m": 0.0,
+   "reverse_max_m": 0.0,
+   "spin_rad": 0.0,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.49,
+   "peak_decel_mps2": 0.6,
+   "max_tilt_deg": 0.3,
+   "start": [
+    6.395,
+    -4.818,
+    -2.5
+   ],
+   "end": [
+    7.279,
+    -4.858,
+    0.2
+   ],
+   "est_s": 6.9,
+   "route_m": 0.94
+  },
+  {
+   "name": "lane_run",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 69.9,
+   "time_s": 20.93,
+   "pos_err_m": 0.0298,
+   "yaw_err_deg": 0.42,
+   "pos_err_at_result_m": 0.0272,
+   "yaw_err_at_result_deg": 3.37,
+   "path_m": 9.13,
+   "reverse_m": 0.003,
+   "reverse_max_m": 0.002,
+   "spin_rad": 0.07,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.37,
+   "peak_decel_mps2": 0.54,
+   "max_tilt_deg": 0.6,
+   "start": [
+    7.279,
+    -4.858,
+    0.2
+   ],
+   "end": [
+    16.396,
+    -4.904,
+    0.1
+   ],
+   "est_s": 23.3,
+   "route_m": 9.15
+  },
+  {
+   "name": "uturn_same_lane",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 42.9,
+   "time_s": 27.1,
+   "pos_err_m": 0.0458,
+   "yaw_err_deg": 1.85,
+   "pos_err_at_result_m": 0.0494,
+   "yaw_err_at_result_deg": 2.46,
+   "path_m": 6.34,
+   "reverse_m": 0.032,
+   "reverse_max_m": 0.018,
+   "spin_rad": 0.35,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.34,
+   "peak_decel_mps2": 0.79,
+   "max_tilt_deg": 0.6,
+   "start": [
+    16.395,
+    -4.904,
+    0.1
+   ],
+   "end": [
+    16.56,
+    -5.051,
+    178.0
+   ],
+   "est_s": 14.3,
+   "route_m": 4.65
+  },
+  {
+   "name": "ring_to_lane3",
+   "status": "SUCCEEDED",
+   "error_code": 0,
+   "timeout_s": 355.0,
+   "time_s": 128.8,
+   "pos_err_m": 0.0378,
+   "yaw_err_deg": 0.69,
+   "pos_err_at_result_m": 0.0351,
+   "yaw_err_at_result_deg": 3.89,
+   "path_m": 58.0,
+   "reverse_m": 0.01,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.06,
+   "recoveries": 0,
+   "peak_accel_mps2": 1.4,
+   "peak_decel_mps2": 0.81,
+   "max_tilt_deg": 0.8,
+   "start": [
+    16.56,
+    -5.051,
+    178.0
+   ],
+   "end": [
+    7.881,
+    -8.733,
+    179.4
+   ],
+   "est_s": 118.3,
+   "route_m": 56.66
+  },
+  {
+   "name": "lane_to_staging",
+   "status": "ABORTED",
+   "error_code": 103,
+   "timeout_s": 136.7,
+   "time_s": 56.77,
+   "pos_err_m": 0.094,
+   "yaw_err_deg": 5.05,
+   "pos_err_at_result_m": 0.095,
+   "yaw_err_at_result_deg": 4.53,
+   "path_m": 21.21,
+   "reverse_m": 0.043,
+   "reverse_max_m": 0.012,
+   "spin_rad": 0.4,
+   "recoveries": 1,
+   "peak_accel_mps2": 1.5,
+   "peak_decel_mps2": 0.95,
+   "max_tilt_deg": 0.7,
+   "start": [
+    7.881,
+    -8.733,
+    179.4
+   ],
+   "end": [
+    -3.418,
+    1.76,
+    -8.3
+   ],
+   "est_s": 45.6,
+   "route_m": 20.28
+  },
+  {
+   "name": "back_0.5",
+   "status": "TIMEOUT",
+   "error_code": 0,
+   "timeout_s": 17.6,
+   "time_s": 17.57,
+   "pos_err_m": 0.0773,
+   "yaw_err_deg": 2.46,
+   "pos_err_at_result_m": 0.0801,
+   "yaw_err_at_result_deg": 5.72,
+   "path_m": 2.73,
+   "reverse_m": 0.022,
+   "reverse_max_m": 0.008,
+   "spin_rad": 0.28,
+   "recoveries": 0,
+   "peak_accel_mps2": 0.68,
+   "peak_decel_mps2": 0.93,
+   "max_tilt_deg": 0.2,
+   "start": [
+    -3.418,
+    1.76,
+    -8.3
+   ],
+   "end": [
+    -3.898,
+    1.783,
+    -5.7
+   ],
+   "est_s": 5.9,
+   "route_m": 0.43,
+   "synthetic": true
+  }
+ ]
+}

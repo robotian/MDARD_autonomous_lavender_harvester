@@ -1,0 +1,113 @@
+#usda 1.0
+(
+    customLayerData = {
+        string charger_source = "test_lavender_farming.public.charging_stations @ 2026-10-28T20:00:19"
+        dictionary charging_stations = {
+            dictionary charger_1 = {
+                int apriltag_id = 1
+                string dock_id = "jackal_charger"
+                double x = -9.654
+                double y = -1.972
+                double yaw_deg = 0
+            }
+            dictionary charger_2 = {
+                int apriltag_id = 8
+                string dock_id = "wiferion_charger"
+                double x = -9.654
+                double y = 0.5
+                double yaw_deg = 0
+            }
+            dictionary charger_3 = {
+                int apriltag_id = 9
+                string dock_id = "a200_charger"
+                double x = -9.654
+                double y = 3.5
+                double yaw_deg = 0
+            }
+        }
+        string farm_file = "lavender_farm.usd"
+        string farm_source = "test_lavender_farming.public.object_data @ 2026-10-09T10:54:46"
+        double4[] lavender_rows = [(-0.24139593995678604, 17.205973077429057, -4.040815789473684, 1.0856763554821032), (-0.626654393215239, 17.210568358157385, -5.860078947368421, 1.079225445783562), (-0.6527647082621911, 17.188190835567553, -7.709105263157896, 1.071984234522514), (-0.5589965646413044, 17.24025359868355, -9.44778947368421, 1.0682514134719352), (-0.622991048646721, 17.215923751065105, -11.289315789473685, 1.0881071264718258), (-0.6174194832871479, 17.21734720346332, -13.108315789473684, 1.085509743259569), (-0.5997944566901418, 17.202142157744493, -15.006342105263158, 1.088242370948166), (-0.5665355138850808, 17.131763463949856, -16.79186842105263, 1.082823144768261), (-0.6045905776969409, 17.197279671298492, -18.615184210526316, 1.0848134267253986), (-0.6067874154098731, 17.268163127373292, -20.4505, 1.0875130656043792)]
+        int plant_count = 380
+    }
+    defaultPrim = "World"
+    doc = "lavender_farm.usd plus its charging stations, written by scripts/make_charger_scene.py from public.charging_stations; don't edit, rerun it."
+    metersPerUnit = 1
+    subLayers = [
+        @./lavender_farm.usd@
+    ]
+    upAxis = "Z"
+)
+
+over "World"
+{
+    def Xform "charging_stations"
+    {
+        def Xform "charger_1" (
+            customData = {
+                int apriltag_id = 1
+                int charging_station_id = 1
+                string dock_id = "jackal_charger"
+            }
+        )
+        {
+            float xformOp:rotateZ = 90
+            double3 xformOp:translate = (-9.654, -1.972, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateZ"]
+
+            def Xform "asset" (
+                prepend references = @../assets/wibotic_tr302_edge/wibotic_tr302_edge.usd@
+                variants = {
+                    string AprilTag_ID = "id_001"
+                }
+            )
+            {
+            }
+        }
+
+        def Xform "charger_2" (
+            customData = {
+                int apriltag_id = 8
+                int charging_station_id = 2
+                string dock_id = "wiferion_charger"
+            }
+        )
+        {
+            float xformOp:rotateZ = 0
+            double3 xformOp:translate = (-9.654, 0.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateZ"]
+
+            def Xform "asset" (
+                prepend references = @../assets/wiferion_charger/wiferion_charger.usda@
+                variants = {
+                    string AprilTag_ID = "id_008"
+                }
+            )
+            {
+            }
+        }
+
+        def Xform "charger_3" (
+            customData = {
+                int apriltag_id = 9
+                int charging_station_id = 3
+                string dock_id = "a200_charger"
+            }
+        )
+        {
+            float xformOp:rotateZ = 0
+            double3 xformOp:translate = (-9.654, 3.5, 0)
+            uniform token[] xformOpOrder = ["xformOp:translate", "xformOp:rotateZ"]
+
+            def Xform "asset" (
+                prepend references = @../assets/wiferion_charger/wiferion_charger.usda@
+                variants = {
+                    string AprilTag_ID = "id_009"
+                }
+            )
+            {
+            }
+        }
+    }
+}
+

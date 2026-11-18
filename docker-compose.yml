@@ -1,0 +1,360 @@
+# Isaac Sim 6.0 (WebRTC streaming) + one ROS 2 Jazzy container per Clearpath robot (A300, A200, Jackal/j100 or
+# Ridgeback/r100 -- see ROBOT_MODEL_<i> below).
+# Robots and sim talk over a private bridge network like robots on a LAN. Every ${VAR} below comes from .env, which
+# scripts/fleetcfg.py generates from the settings database (scripts/fleet_settings.py: what each one is; don't edit
+# .env). The ROS 2 middleware is the setting FLEET_RMW:
+#   FLEET_RMW=rmw_zenoh_cpp    (as on the real robots; every session connects to the zenoh-router service)
+#   FLEET_RMW=rmw_fastrtps_cpp (FastDDS over UDP only, docker/fastdds_udp.xml)
+name: clearpath-fleet
+
+x-rmw-env: &rmw-env
+  RMW_IMPLEMENTATION: ${FLEET_RMW:-rmw_zenoh_cpp}   # not read from RMW_IMPLEMENTATION: a ROS-configured host shell would override the setting
+  ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+  # rmw_zenoh_cpp: every session is a client of the router (ZENOH_ROUTER can point at a real robot's router).
+  # The default "peer" mode needs direct links between sessions, but they only listen on loopback, so peers in
+  # different containers could not see each other.
+  # connect/timeout_ms: rmw_zenoh gives a client one connection attempt (0 ms) and exits when it fails, so every node
+  # started while the router was busy (a stack's launch pegs it 30-90 s) died at init (half of j100_0921's stack,
+  # 2026-10-13). Two minutes of retries cover that; a wedged router still fails them in the end.
+  ZENOH_CONFIG_OVERRIDE: mode="client";connect/endpoints=["${ZENOH_ROUTER:-tcp/zenoh-router:7447}"];connect/timeout_ms=120000
+  # rmw_fastrtps_cpp
+  FASTRTPS_DEFAULT_PROFILES_FILE: /dds/fastdds_udp.xml
+
+x-robot: &robot
+  image: clearpath-robot:jazzy
+  build: ./robot
+  networks: [ros]
+  # host.docker.internal = the host, for services on its ports from outside this compose project (status_server's
+  # PostgreSQL on port 5433: the base station, basestation.compose.yml, or a robotian_database container).
+  extra_hosts: ["host.docker.internal:host-gateway"]
+  # Untracked secrets, e.g. PGPASSWORD=... for status_server's database (its config.yaml holds no password).
+  env_file:
+    - path: ./db.env
+      required: false
+  stdin_open: true
+  tty: true
+  depends_on: [isaac-sim, zenoh-router]
+  environment: &robot-env
+    <<: *rmw-env
+    # true: ROS nodes run on the sim's /clock (robot/bin/* pass use_sim_time, sim_robot_upstart defaults to it)
+    USE_SIM_TIME: ${USE_SIM_TIME:-true}
+    DISPLAY: ${DISPLAY:-:0}
+    XAUTHORITY: /tmp/.x11/xauth
+    QT_X11_NO_MITSHM: "1"
+    # the NVIDIA driver's GL worker thread segfaulted ~60 % of rviz2 starts (driver 595.84, 2026-11-03)
+    __GL_THREADED_OPTIMIZATIONS: "0"
+    # the NVIDIA OpenGL/EGL libraries for RViz (see deploy: below); utility = nvidia-smi
+    NVIDIA_DRIVER_CAPABILITIES: graphics,utility
+    # uid/gid for the containers' `robot` user (owner of colcon_ws); empty = the owner of this checkout
+    HOST_UID: ${HOST_UID:-}
+    HOST_GID: ${HOST_GID:-}
+  volumes: &robot-volumes
+    - /tmp/.X11-unix:/tmp/.X11-unix
+    - ./.x11:/tmp/.x11:ro
+    - ./docker/fastdds_udp.xml:/dds/fastdds_udp.xml:ro
+    - ./scripts:/scripts:ro
+    # Shared ROS workspace: the same host folder in every robot container, so a change made from inside one
+    # robot's container (or on the host) shows up in all of them.
+    - ./colcon_ws:/home/robot/colcon_ws
+    # Real robots' own actual robot.yaml files (see robot_data/<serial>/), read directly and unmodified by
+    # robot/entrypoint.sh for a model id it has one for, instead of rendering a stripped-down .tmpl -- read-only
+    # since nothing in a robot container should ever write back to this.
+    - ./robot_data:/robot_data:ro
+    # The sim's state (fleet/state.json): robot/bin/battery_sim reads the scene's charging stations from it.
+    - ./sim/generated:/generated:ro
+  # The NVIDIA driver's OpenGL for RViz (and camera_view), like the sim's: the container toolkit mounts
+  # libGLX_nvidia etc. (NVIDIA_DRIVER_CAPABILITIES in environment: above) and glvnd picks it for the host's NVIDIA X server.
+  # Before (2026-10-09) the robots only had /dev/dri, which Mesa can't drive on an NVIDIA card: RViz ran on Mesa's
+  # software renderer (libgallium, "OpenGl version: 4.5"), whose GLSL linker rejects the Map display's shader
+  # ("active samplers with a different type refer to the same texture image unit"); with two robots' nav2 views
+  # open, both RViz died (SIGSEGV after the map loaded, GL_OUT_OF_MEMORY). Same image and map with this: GL 4.6
+  # on libGLX_nvidia, no error.
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: all
+            capabilities: [gpu]
+
+services:
+  # One-shot: named volumes are created root-owned, Isaac Sim runs as uid 1234. ./sim/generated (gitignored, so
+  # missing in a fresh clone) is written by both the sim (uid 1234) and the host user (fleet_ctl.py's spawn
+  # requests in fleet/), so it and fleet/ are made world-writable whoever created them. ./sim/captures (gitignored)
+  # is where Isaac Sim's Edit > Capture Screenshot saves (FLEET_SETTINGS in .env), so it is made writable too.
+  volume-init:
+    image: alpine:3.16.3
+    user: root
+    command: sh -c 'chown -R 1234:1234 /cache /ov-data /logs /config /compute && mkdir -p /generated/fleet && chmod a+rwx /generated /generated/fleet /captures'
+    volumes:
+      - ./sim/generated:/generated
+      - ./sim/captures:/captures
+      - isaac-cache:/cache
+      - isaac-ov-data:/ov-data
+      - isaac-logs:/logs
+      - isaac-config:/config
+      - isaac-compute:/compute
+    networks: [ros]
+
+  # The zenoh router that all sessions (sim and robots) connect to. Idle when using FastDDS.
+  # zenohd 1.10.1 with rmw_zenohd's own config (docker/zenoh_router.json5), not Jazzy's rmw_zenohd (zenoh 1.8.0):
+  # with three robot stacks launched, any one of them stopping (killed, Ctrl+C'd, Reset) sent that router into a
+  # 100 % CPU loop for good -- new sessions hung, data stopped, only a fleet restart helped (2026-10-09). The
+  # sessions (rmw_zenoh_cpp, zenoh 1.8.0) talk to a 1.10 router: zenoh 1.x keeps its protocol compatible.
+  zenoh-router:
+    image: eclipse/zenoh:1.10.1
+    container_name: zenoh-router
+    hostname: zenoh-router
+    networks: [ros]
+    command: ["-c", "/etc/zenoh/router.json5"]
+    environment:
+      # zenohd's log filter (RUST_LOG): e.g. info,zenoh_transport=debug logs every session's open/close with its
+      # zid, address and reason, to identify the session a stall is stuck on ("Unable to push non droppable
+      # network message to <zid>", 2026-10-10)
+      RUST_LOG: ${ZENOH_ROUTER_LOG:-info}
+    logging:  # debug levels are verbose: bounded, and lost anyway when compose recreates the container
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "4"
+    volumes:
+      - ./docker/zenoh_router.json5:/etc/zenoh/router.json5:ro
+    # for the base station's router (host network, basestation.compose.yml, which takes host port 7447 itself as a
+    # real base station would); loopback only
+    ports:
+      - "127.0.0.1:7448:7447"
+    healthcheck:  # listening on 7447 (Alpine: no bash for a test connection)
+      test: ["CMD-SHELL", "grep -q ':1D17 0\\{8,32\\}:0000 0A' /proc/net/tcp6 /proc/net/tcp"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  isaac-sim:
+    image: a300-isaac-sim:${ISAAC_TAG:-6.0.0}
+    build:
+      context: ./docker
+      dockerfile: isaac-sim.Dockerfile
+      args:
+        ISAAC_TAG: ${ISAAC_TAG:-6.0.0}
+      network: host  # apt over plain http gets 403 from the bridge network on this host (2026-11-06); fine on the host's
+    container_name: a300-isaac-sim
+    hostname: isaac-sim
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      zenoh-router:
+        condition: service_healthy
+    networks: [ros]
+    command: ["--exec", "/sim/scripts/setup_scene.py"]
+    environment:
+      ACCEPT_EULA: "Y"
+      PRIVACY_CONSENT: "Y"
+      NVIDIA_DRIVER_CAPABILITIES: all
+      # No OmniHub (Omniverse's local cache service): /usr/local/bin/hub (2.0.0) exits at once in this container
+      # ("Hub is not running"), and omni.client retried it ~40 times at start ("Hub encountered error ... Hub
+      # failed to launch") before going direct anyway. The Content tab and S3 assets load the same without it.
+      OMNICLIENT_HUB_MODE: disabled
+      ISAACSIM_HOST: ${ISAACSIM_HOST:-127.0.0.1}
+      <<: *rmw-env
+      # The sim starts with the scene only; robots (models, poses) arrive later as a spawn request written by
+      # scripts/fleet_ctl.py (scripts/fleet.sh spawn / the web UI), so nothing robot-related is passed here and
+      # changing the robots never recreates this container. SCENE_LANES: lanes between the lavender rows.
+      SCENE_LANES: ${SCENE_LANES:-3}
+      # the world: empty = ground plane + lights, "lavender" = the lavender farm, else a USD file in ./sim/scene/
+      # (path relative to it). The web UI's Scene selector saves it; a change recreates the sim.
+      SIM_SCENE: ${SIM_SCENE:-}
+      # 1: two farm workers crouched at a lavender row, working and chatting (sim/scripts/farm_workers.py);
+      # off by default: NVIDIA digital humans cost frame rate and memory
+      FARM_WORKERS: ${FARM_WORKERS:-0}
+      # 1: robots pass through lavender foliage (lidars still see it), a small rigid core per plant stops them;
+      # 0: the whole plant is solid (setup_scene.soften_lavender)
+      LAVENDER_SOFT: ${LAVENDER_SOFT:-1}
+      CAMERA_WIDTH: ${CAMERA_WIDTH:-640}
+      CAMERA_HEIGHT: ${CAMERA_HEIGHT:-360}
+      CAMERA_FRAME_SKIP: ${CAMERA_FRAME_SKIP:-0}
+      # 1: a robot camera renders only while one of its topics has a subscriber (setup_scene.camera_on_demand_loop)
+      CAMERA_ON_DEMAND: ${CAMERA_ON_DEMAND:-1}
+      SIM_REF_POSE: ${SIM_REF_POSE:-1}
+      FORCE_REIMPORT: ${FORCE_REIMPORT:-0}
+      FLEET_DEBUG: ${FLEET_DEBUG:-0}
+      CAMERA_STREAMS: ${CAMERA_STREAMS:-color,depth}
+      SIM_RATE_HZ: ${SIM_RATE_HZ:-20}
+      FLEET_MERGE_FIXED: ${FLEET_MERGE_FIXED:-0}
+      PHYSICS_HZ: ${PHYSICS_HZ:-60}
+      # physx (default) or newton: the physics engine (setup_scene.select_physics_engine; sim/CLAUDE.md "Physics engine")
+      SIM_PHYSICS: ${SIM_PHYSICS:-physx}
+      NEWTON_PHYSICS_HZ: ${NEWTON_PHYSICS_HZ:-240}
+      # mujoco or vbd (ISAAC_TAG 6.2.0 only): Newton's solver (setup_scene.setup_vbd)
+      NEWTON_SOLVER: ${NEWTON_SOLVER:-mujoco}
+      NEWTON_WHEEL_MAX_FORCE: ${NEWTON_WHEEL_MAX_FORCE:-20}
+      NEWTON_IGNORE_PATHS: ${NEWTON_IGNORE_PATHS:-/World/lavender /World/shrubs /World/trees}
+      PHYSICS_SOLVER: ${PHYSICS_SOLVER:-PGS}
+      VELCTL: ${VELCTL:-1}
+      FLEET_SETTINGS: ${FLEET_SETTINGS:-}
+      FLEET_VIEWPORT_RES: ${FLEET_VIEWPORT_RES:-}
+      ROBOT_LOOKS: ${ROBOT_LOOKS:-full}
+      FLEET_SNAPSHOT: ${FLEET_SNAPSHOT:-}
+      # true: publish /clock and stamp every message with simulation time; false: wall-clock stamps, no /clock
+      USE_SIM_TIME: ${USE_SIM_TIME:-true}
+      # stream (default): headless + WebRTC; headed: the full Isaac Sim desktop app in a window on the host
+      # display (run scripts/x11_auth.sh once per login first). See docker/isaac-entrypoint.sh.
+      SIM_MODE: ${SIM_MODE:-stream}
+      DISPLAY: ${DISPLAY:-:0}
+      XAUTHORITY: /tmp/.x11/xauth
+    ports:
+      - "49100:49100/tcp"   # WebRTC signalling
+      - "47998:47998/udp"   # WebRTC media
+    volumes:
+      - ./sim:/sim
+      - ./docker/fastdds_udp.xml:/dds/fastdds_udp.xml:ro
+      # Kit's caches: the named volumes for 6.0.0, ./sim/generated/isaac_<tag>/ for another ISAAC_TAG (fleetcfg render)
+      - ${ISAAC_VOL_CACHE:-isaac-cache}:/isaac-sim/.cache
+      - ${ISAAC_VOL_OV_DATA:-isaac-ov-data}:/isaac-sim/.local/share/ov/data
+      - ${ISAAC_VOL_LOGS:-isaac-logs}:/isaac-sim/.nvidia-omniverse/logs
+      - ${ISAAC_VOL_CONFIG:-isaac-config}:/isaac-sim/.nvidia-omniverse/config
+      - ${ISAAC_VOL_COMPUTE:-isaac-compute}:/isaac-sim/.nv/ComputeCache
+      # X11 for SIM_MODE=headed (unused when streaming)
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./.x11:/tmp/.x11:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Slot i is started when the profile n<NUM_ROBOTS> is active (COMPOSE_PROFILES=n<NUM_ROBOTS> in .env), i.e. when
+  # NUM_ROBOTS > i. Supports up to 8 robots; to add more, copy a block (next index, next Foxglove port), extend the
+  # profile lists and fleet_settings.MAX_SLOTS. The service *keys* (robot0..robot7) are stable slot identities for
+  # `docker compose` itself; each slot's real identity -- container name, ROS namespace -- is its model
+  # (ROBOT_MODEL_<i>: a300/a200/j100/r100 or a real robot id like j100_0921, default a300) plus its slot index
+  # (`_%04d`, e.g. slot 1 running a Jackal is j100_0001), except a real robot id, which is already globally unique
+  # and is used as is (j100_0921). Compose interpolation can't look inside ROBOT_MODEL_<i>, so the generated .env
+  # (scripts/fleetcfg.py render, from the settings database's robot slots; scripts/fleet.sh runs it first) carries
+  # ROBOT_SUFFIX_<i>= (empty, not unset: `${VAR-default}` without a colon keeps an empty value) for a real robot,
+  # and ROBOT_HOSTNAME_<i>=cpr-<namespace with - for _> for every slot: clearpath_config validates the container's
+  # OS hostname as its system.localhost default before it reads robot.yaml, and rejects underscores. ROS namespace
+  # (robot/entrypoint.sh's ROBOT_NAMESPACE, setup_scene.py's robot_namespace()) is computed the same way at runtime;
+  # ROBOT_NAMESPACE/ROS_NAMESPACE below use the same suffix, so `docker exec <c> printenv` and sh shells have the
+  # real robot's id too, not <id>_000<i> (only bash got the entrypoint's override, through BASH_ENV).
+  # The `cpr-slot-<i>` / `_000<i>` fallbacks only matter for a `docker compose up` without a generated .env.
+
+  robot0:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_0:-a300}${ROBOT_SUFFIX_0-_0000}
+    profiles: [n1, n2, n3, n4, n5, n6, n7, n8]
+    ports:
+      - "8765:8765/tcp"   # Foxglove bridge (ws://<host>:8765)
+    hostname: ${ROBOT_HOSTNAME_0:-cpr-slot-0000}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_0:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_0:-a300}${ROBOT_SUFFIX_0-_0000}
+      ROS_NAMESPACE: ${ROBOT_MODEL_0:-a300}${ROBOT_SUFFIX_0-_0000}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot1:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_1:-a300}${ROBOT_SUFFIX_1-_0001}
+    profiles: [n2, n3, n4, n5, n6, n7, n8]
+    ports:
+      - "8766:8765/tcp"   # Foxglove bridge (ws://<host>:8766)
+    hostname: ${ROBOT_HOSTNAME_1:-cpr-slot-0001}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_1:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_1:-a300}${ROBOT_SUFFIX_1-_0001}
+      ROS_NAMESPACE: ${ROBOT_MODEL_1:-a300}${ROBOT_SUFFIX_1-_0001}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot2:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_2:-a300}${ROBOT_SUFFIX_2-_0002}
+    profiles: [n3, n4, n5, n6, n7, n8]
+    ports:
+      - "8767:8765/tcp"   # Foxglove bridge (ws://<host>:8767)
+    hostname: ${ROBOT_HOSTNAME_2:-cpr-slot-0002}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_2:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_2:-a300}${ROBOT_SUFFIX_2-_0002}
+      ROS_NAMESPACE: ${ROBOT_MODEL_2:-a300}${ROBOT_SUFFIX_2-_0002}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot3:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_3:-a300}${ROBOT_SUFFIX_3-_0003}
+    profiles: [n4, n5, n6, n7, n8]
+    ports:
+      - "8768:8765/tcp"   # Foxglove bridge (ws://<host>:8768)
+    hostname: ${ROBOT_HOSTNAME_3:-cpr-slot-0003}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_3:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_3:-a300}${ROBOT_SUFFIX_3-_0003}
+      ROS_NAMESPACE: ${ROBOT_MODEL_3:-a300}${ROBOT_SUFFIX_3-_0003}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot4:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_4:-a300}${ROBOT_SUFFIX_4-_0004}
+    profiles: [n5, n6, n7, n8]
+    ports:
+      - "8769:8765/tcp"   # Foxglove bridge (ws://<host>:8769)
+    hostname: ${ROBOT_HOSTNAME_4:-cpr-slot-0004}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_4:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_4:-a300}${ROBOT_SUFFIX_4-_0004}
+      ROS_NAMESPACE: ${ROBOT_MODEL_4:-a300}${ROBOT_SUFFIX_4-_0004}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot5:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_5:-a300}${ROBOT_SUFFIX_5-_0005}
+    profiles: [n6, n7, n8]
+    ports:
+      - "8770:8765/tcp"   # Foxglove bridge (ws://<host>:8770)
+    hostname: ${ROBOT_HOSTNAME_5:-cpr-slot-0005}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_5:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_5:-a300}${ROBOT_SUFFIX_5-_0005}
+      ROS_NAMESPACE: ${ROBOT_MODEL_5:-a300}${ROBOT_SUFFIX_5-_0005}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot6:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_6:-a300}${ROBOT_SUFFIX_6-_0006}
+    profiles: [n7, n8]
+    ports:
+      - "8771:8765/tcp"   # Foxglove bridge (ws://<host>:8771)
+    hostname: ${ROBOT_HOSTNAME_6:-cpr-slot-0006}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_6:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_6:-a300}${ROBOT_SUFFIX_6-_0006}
+      ROS_NAMESPACE: ${ROBOT_MODEL_6:-a300}${ROBOT_SUFFIX_6-_0006}  # also set by the entrypoint; needed in `docker exec` shells
+
+  robot7:
+    <<: *robot
+    container_name: ${ROBOT_MODEL_7:-a300}${ROBOT_SUFFIX_7-_0007}
+    profiles: [n8]
+    ports:
+      - "8772:8765/tcp"   # Foxglove bridge (ws://<host>:8772)
+    hostname: ${ROBOT_HOSTNAME_7:-cpr-slot-0007}
+    environment:
+      <<: *robot-env
+      ROBOT_MODEL: ${ROBOT_MODEL_7:-a300}
+      ROBOT_NAMESPACE: ${ROBOT_MODEL_7:-a300}${ROBOT_SUFFIX_7-_0007}
+      ROS_NAMESPACE: ${ROBOT_MODEL_7:-a300}${ROBOT_SUFFIX_7-_0007}  # also set by the entrypoint; needed in `docker exec` shells
+
+networks:
+  ros:
+    driver: bridge
+    # A fixed interface name, so a host firewall can let the containers reach host-network services (the base
+    # station's DDS and PostgreSQL): `sudo ufw allow in on br-fleet`. Changing it needs `scripts/fleet.sh down` first.
+    driver_opts:
+      com.docker.network.bridge.name: br-fleet
+
+volumes:
+  isaac-cache:
+  isaac-ov-data:
+  isaac-logs:
+  isaac-config:
+  isaac-compute:

@@ -1,0 +1,22 @@
+Copyright (c) 2026 Michigan Technological University. All rights reserved.
+
+This repository (multirobot_sim) and everything in it that is not listed in
+THIRD_PARTY_NOTICES.md is proprietary and unpublished. No license is granted,
+by implication or otherwise, to use, copy, modify, distribute or sublicense it
+without the prior written permission of the copyright holder. Access to the
+repository does not by itself grant any such right.
+
+Third-party components (git submodules under colcon_ws/src/, vendored ROS
+packages, robot meshes copied into sim/assets/ and other sim assets) are NOT
+covered by this notice. Each remains under its own license, as listed in
+THIRD_PARTY_NOTICES.md, and those terms take precedence for those files.
+Copies of the license texts they require are in licenses/.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. THE SOFTWARE CONTROLS PHYSICAL ROBOTS; USE IT ON REAL HARDWARE AT
+YOUR OWN RISK.

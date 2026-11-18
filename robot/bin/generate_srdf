@@ -1,0 +1,118 @@
+#!/bin/bash
+# What a real Clearpath robot's own bringup also does for a robot with a manipulator: generate
+# /etc/clearpath/robot.srdf (the MoveIt semantic description -- planning groups, named group states, and the
+# self-collision matrix) from /etc/clearpath/robot.yaml, so real MoveIt launch files (move_group, moveit_servo,
+# see mtu32_bringup's moveit.launch.py) have something to load. Needed because moveit.launch.py reads
+# robot.srdf directly and fails outright ("No such file or directory") if it was never generated.
+#
+# clearpath_generator_common's own console_script for this, generate_semantic_description, does the same two
+# steps below but calls moveit_collision_updater with just `--trials 100000` (searching for "never colliding"
+# link pairs by randomly sampling 100000 joint configurations and checking collisions via FK) -- confirmed live,
+# repeatedly, across an armed model (j100_0921) and an armless one (a300_00036): that exhaustive random search
+# reliably crashes (stack smashing / segfault, not an occasional flake) partway through, before ever writing
+# robot.srdf. Two things are needed to avoid it: `--default --always` (skip the *default*/*always*-colliding-pair
+# searches) and a moderate `--trials`. The trials value is NOT free: it is the number of random joint configurations
+# sampled to find pairs that "never collide", and every pair that doesn't collide in any sample is disabled for good.
+# `--trials 1` (used before) disabled ~368 pairs from ONE sample, including arm-vs-body pairs -- MoveIt then planned
+# straight through the robot (a200_0284: gripper into rail_link / rail_post_left_link, found with GetStateValidity:
+# valid with that matrix, colliding once the "Never" pairs were removed). 10000 (the MoveIt Setup Assistant default)
+# runs in about a second and keeps those pairs enabled (265 disabled pairs vs 415). Values >= ~30000 crashed the tool
+# here ("stack smashing detected"; possibly the same zenoh exit abort as below, not re-tested on local FastDDS), which
+# is why Clearpath's own 100000 isn't used. Don't go the other way and
+# strip every "Never" pair either: with only ~47 pairs disabled moveit_servo's per-cycle collision checks made the
+# cut_stem approach jerky.
+set -e
+# robot.urdf.xacro is normally produced by robot_state's own background loop, but that starts *after* this
+# script runs in entrypoint.sh -- generate it here too rather than depend on boot ordering (idempotent; harmless
+# that robot_state generates it again moments later).
+ros2 run clearpath_generator_common generate_description -s /etc/clearpath > /dev/null
+python3 - <<'PY'
+from clearpath_generator_common.semantic_description.generator import SemanticDescriptionGenerator
+from clearpath_config.common.types.exception import (
+    UnsupportedAccessoryException,
+    UnsupportedMiddlewareException,
+    UnsupportedPlatformException,
+)
+from ros2run.api import get_executable_path
+import os
+import subprocess
+import xml.etree.ElementTree as ET
+
+setup_path = '/etc/clearpath/'
+
+
+def prune_dangling_joints(root):
+    """Same fix as scripts/flatten_urdf.py's own prune_dangling_joints (see its docstring): mtu32_description's
+    xacro unconditionally mounts camera_1 on arm_0_end_effector_link, which doesn't exist on an armless robot
+    (e.g. j100_0922) -- xacro itself never validates this, but moveit_collision_updater's strict URDF loader
+    does, and aborts. Re-implemented here (not imported) since flatten_urdf.py is a host-side build script, not
+    installed in this image."""
+    changed = True
+    while changed:
+        changed = False
+        link_names = {link.get('name') for link in root.findall('link')}
+        for joint in root.findall('joint'):
+            parent_name = joint.find('parent').get('link')
+            if parent_name in link_names:
+                continue
+            child_name = joint.find('child').get('link')
+            child = next((link for link in root.findall('link') if link.get('name') == child_name), None)
+            print(f'[generate_srdf] dropping joint {joint.get("name")!r}: parent {parent_name!r} is never defined as a link')
+            root.remove(joint)
+            if child is not None:
+                root.remove(child)
+            changed = True
+            break
+
+
+try:
+    SemanticDescriptionGenerator(setup_path).generate()
+
+    # Expand + clean the URDF before handing it to moveit_collision_updater's own strict loader (see
+    # prune_dangling_joints above) -- xacro alone doesn't validate the tree, so a dangling joint would otherwise
+    # only be caught here, aborting the whole script.
+    urdf_xml = subprocess.run(
+        ['xacro', os.path.join(setup_path, 'robot.urdf.xacro')],
+        capture_output=True, check=True, text=True).stdout
+    root = ET.fromstring(urdf_xml)
+    prune_dangling_joints(root)
+    cleaned_urdf_path = '/tmp/robot.srdf_gen.urdf'
+    ET.ElementTree(root).write(cleaned_urdf_path)
+
+    with open(os.path.join(setup_path, 'package.xml'), 'w+') as f:
+        f.write('<package><name>clearpath_generator_common</name></package>\n')
+    path = get_executable_path(
+        executable_name='moveit_collision_updater',
+        package_name='clearpath_generator_common')
+    # The tool is a ROS node only by accident (it creates one to log), so it runs on local FastDDS, not the fleet's
+    # zenoh: under rmw_zenoh_cpp it does its work, writes robot.srdf and then aborts at exit (zenoh's runtime
+    # panics: "The Thread Local Storage inside Tokio is destroyed ... at process exit", rc -6), so every attempt
+    # looked failed. That was the "random stack smashing" seen before (~50% at 10000 trials), and on 2026-10-09 it
+    # failed 9/9 on every robot; the file kept was the --trials 1 fallback's. Same files on local FastDDS: 5/5 at
+    # 10000. A failed attempt's output is removed, and there is no --trials 1 fallback any more: that matrix lets
+    # MoveIt plan through the robot (see the header), so no SRDF (sim_robot_upstart then says so) is safer.
+    env = {k: v for k, v in os.environ.items() if not k.startswith('ZENOH_')}
+    env.update(RMW_IMPLEMENTATION='rmw_fastrtps_cpp', ROS_AUTOMATIC_DISCOVERY_RANGE='LOCALHOST')
+    out_path = os.path.join(setup_path, 'robot.srdf')
+    if os.path.exists(out_path):
+        os.remove(out_path)
+    for trials in (10000, 10000, 10000, 5000, 5000, 2000):
+        rc = subprocess.run([
+            path,
+            '--urdf', cleaned_urdf_path,
+            '--srdf', os.path.join(setup_path, 'robot.srdf.xacro'),
+            '--output', out_path,
+            '--default', '--always', '--trials', str(trials),
+        ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env).returncode
+        if rc == 0 and os.path.exists(out_path):
+            print(f'[generate_srdf] robot.srdf written with --trials {trials}')
+            break
+        if os.path.exists(out_path):
+            os.remove(out_path)
+        print(f'[generate_srdf] moveit_collision_updater failed (rc={rc}) with --trials {trials}; retrying')
+    else:
+        print('[generate_srdf] ERROR: could not generate robot.srdf (MoveIt and sim_robot_upstart need it)')
+    os.remove(os.path.join(setup_path, 'package.xml'))
+except (UnsupportedAccessoryException, UnsupportedMiddlewareException, UnsupportedPlatformException) as err:
+    print(f'[generate_srdf] skipped: {err}')
+PY

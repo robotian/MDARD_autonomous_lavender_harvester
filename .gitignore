@@ -1,0 +1,36 @@
+# Rebuilt by scripts/gen_urdf.sh and the sim's first start
+sim/generated/
+# Isaac Sim's Edit > Capture Screenshot (FLEET_SETTINGS in .env)
+sim/captures/
+__pycache__/
+# colcon build artifacts (source packages under colcon_ws/src/ are tracked)
+colcon_ws/build/
+colcon_ws/install/
+colcon_ws/log/
+# Real robots' own actual robot.yaml files and their original colcon workspaces. The packages the sim needs
+# from them are in colcon_ws/src/ instead: git-backed ones as submodules (mtu32_husky/mocap_fake_localizer on
+# their `sim` branch), the rest as plain files.
+robot_data/**/colcon_ws/
+robot_data/pictures/**
+# scripts/backup_robot.sh snapshots of the real robots: hold WiFi passwords and other secrets
+robot_data/**/backups/
+# Per-robot Foxglove layouts written by scripts/foxglove_layout.sh
+foxglove/
+# sim/assets/ is tracked, its binaries through Git LFS (.gitattributes); hand-made backups of them are not
+sim/assets/**/*.orig
+sim/assets/**/*.bak-*
+# Secrets passed to the robot containers (docker-compose.yml env_file), e.g. PGPASSWORD
+db.env
+# Database dumps for the base station's first start (basestation.compose.yml): farm data, not source
+basestation/initdb/*
+!basestation/initdb/README.md
+# scripts/db_sync.sh dumps (backups taken before a pull/restore, pulled copies): farm data, not source
+basestation/backups/
+# The settings database (scripts/fleetcfg.py; -wal/-shm while it is open) and what is generated from it: each
+# checkout has its own
+fleet_config.sqlite*
+.env
+tools/sim_ui/real_robots.json
+
+# the .usdz holds the same stage)
+

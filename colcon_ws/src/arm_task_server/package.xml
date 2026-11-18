@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>arm_task_server</name>
+  <version>0.1.0</version>
+  <description>
+    The robot's manipulator_action_server (status_interfaces/action/ManipulatorTask), the arm commands
+    husky_operations_manager sends during a harvesting operation: GO STOW / GO READY / GO DROP move the arm to a
+    named SRDF state through move_group, START HARVEST runs stow_arm_cpp's cut_stem action. Sim and real robots.
+  </description>
+  <maintainer email="noreply@example.com">multirobot_sim</maintainer>
+  <license>Proprietary</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <depend>rclpy</depend>
+  <depend>action_msgs</depend>
+  <depend>moveit_msgs</depend>
+  <depend>status_interfaces</depend>
+  <depend>plant_cutter_msgs</depend>
+  <depend>moveit_sim_bridge</depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>clearpath_config</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

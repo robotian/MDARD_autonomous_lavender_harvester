@@ -1,0 +1,229 @@
+# Sim parameters per robot model, read by sim/scripts/setup_scene.py at sim start (model_params()).
+#
+# A model's parameters are derived; nothing here has to be added for a new robot:
+#   1. `platforms[<platform>]`, the platform taken from robot.yaml's serial_number (a300-00037 -> a300);
+#   2. robot.yaml's platform.extras.ros_parameters.platform_velocity_controller, if any (the robot's real
+#      calibration: wheel_radius x mean(left/right_wheel_radius_multiplier), wheel_separation_multiplier,
+#      linear.x/angular.z.max_velocity);
+#   3. sensors and arm from robot.yaml + the flattened URDF (sim/assets/<m>/): camera, imu, gps, lidar2d,
+#      lidar3d, has_arm, wrist_camera (camera_1_link), imu_link (where flatten_urdf.py merged the IMU frame,
+#      merged_links.json);
+#   4. chassis_link at spawn: the one prim the URDF importer gave ArticulationRootAPI;
+#   5. `robots[<model>]` below, last: only for what can't be derived or was tuned by hand.
+# The derived values are logged at sim start ("[fleet] params <model>: ...").
+#
+# Keys: drive (diff|omni), wheel_radius, wheel_separation, separation_multiplier, max_linear, max_angular,
+# chassis_link, has_camera, camera_optical_link, wrist_camera, imu_link, imu_index, gps_links, lidar2d_link,
+# lidar3d_link, has_arm, drop_mimic_constraints, massless_density, frame_mass, vel_ctl, wheel_friction, wheel_max_force, wheel_damping (Newton only),
+# vbd_wheel_contact ([ke N/m, kd N*s/m] on the wheel colliders, NEWTON_SOLVER=vbd only),
+# vbd_finger_gains ([N*m/rad, N*m*s/rad, overclose rad] of the ee_cutter finger joint, NEWTON_SOLVER=vbd only),
+# vbd_blade_gains ([N*m/rad, N*m*s/rad, target lag rad] of its blade joint, NEWTON_SOLVER=vbd only),
+# end_effector, arm_base_mount (see setup_scene.py).
+# Tune vel_ctl / wheel_friction with scripts/vel_tune/step_test.sh (cmd_vel steps vs the sim's ground truth).
+
+# Generic drive constants from each platform's real clearpath_control/config/<platform>/control/diff_4wd.yaml
+# (omni_4wd.yaml for r100) -- keep them in sync with the real configs.
+platforms:
+  a300: {drive: diff, wheel_radius: 0.1625, wheel_separation: 0.562, separation_multiplier: 1.75, max_linear: 2.0, max_angular: 2.0}
+  a200: {drive: diff, wheel_radius: 0.1651, wheel_separation: 0.555, separation_multiplier: 1.875, max_linear: 1.0, max_angular: 1.0}
+  j100: {drive: diff, wheel_radius: 0.098, wheel_separation: 0.37559, separation_multiplier: 1.5, max_linear: 2.0, max_angular: 4.0}
+  # Ridgeback, holonomic mecanum. Wheels handle forward/back and rotation like the other platforms; BodyDrive
+  # (setup_scene.py) injects the sideways component, which a plain-cylinder wheel collider can't produce.
+  # wheel_positions/wheel_axis/mecanum_angles are its real mecanum geometry, NOT used to drive anything (a
+  # per-wheel HolonomicController solve was tried and fought rotation), kept as verified reference:
+  # positions are r100.urdf's rocker xyz (+-0.319, 0, 0.05) + wheel xyz (0, +-0.2755, 0), 0.319 + 0.2755 =
+  # omni_4wd.yaml's sum_of_robot_center_projection_on_X_Y_axis 0.59; angles are degrees (HolonomicController
+  # applies them with degrees=True despite its schema saying radians), standard "X" arrangement.
+  r100:
+    drive: omni
+    wheel_radius: 0.0759
+    wheel_separation: 0.551
+    separation_multiplier: 1.0
+    max_linear: 1.3
+    max_angular: 4.0
+    wheel_positions: [[0.319, 0.2755, 0.05], [0.319, -0.2755, 0.05], [-0.319, 0.2755, 0.05], [-0.319, -0.2755, 0.05]]
+    wheel_axis: [0.0, 1.0, 0.0]
+    mecanum_angles: [-135.0, -45.0, -45.0, -135.0]
+
+robots:
+  # Its robot_data/ folder is gone, so it is still generated from the stripped robot/config/robot.j100_0936.yaml.tmpl
+  # (platform.extras dropped): the drive calibration below is the real robot.yaml's platform_velocity_controller
+  # (same as j100_0921), and its asset predates merged_links.json -- its IMU chain (imu_1_link .. the fake
+  # top_mount_link, all visual-only) merges into chassis_link.
+  j100_0936:
+    wheel_radius: 0.0931  # 0.098 x 0.95
+    separation_multiplier: 1.17
+    max_linear: 1.0
+    max_angular: 1.0
+    imu_link: chassis_link
+    imu_index: 1  # its imu_1_link is merged away, and without merged_links.json only the built-in imu_0_link is seen
+    # Same massless frame links as j100_0922 (below): without these it tipped over (74 deg) stopping from 0.5 m/s
+    # in its drive calibration (2026-10-20).
+    massless_density: 100.0
+    frame_mass: 0.02
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.2, 1, 5, 2, 0.949, 2]
+    newton:
+      wheel_max_force: 20
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.951, 1.251]
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/j100_0936_newton_* (best newton_cl1, sweep pass)
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/j100_0936_physx_* (best physx_cl1, sweep pass)
+  # Its mtu32 top frame, GPS spheres and ~13 frame links have no <inertial>, so PhysX weighed it 75 kg (URDF
+  # 18.4 kg) with the mass high up, and it tipped backwards at 0.2 m/s. See fix_massless_bodies. Not applied to
+  # j100_0921/a200_0284/a300_00036, whose cut_stem runs were tuned with the current masses.
+  j100_0922:
+    massless_density: 100.0
+    frame_mass: 0.02
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.2, 1, 2.5, 2, 0.948, 2]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/j100_0922_physx_* (best physx_cl2, sweep pass)
+    newton:
+      wheel_max_force: 20
+      vel_ctl: [0, 0.3, 0.05, 0, 0.5, 0.15, 0.951, 1.032]
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/j100_0922_newton_* (best newton_cl1, sweep pass)
+  # Drive tuned 2026-10-13 with scripts/vel_tune (cmd_vel steps vs ground truth). PhysX friction is rigid Coulomb: a
+  # skid-steer chassis barely yaws until the wheels slip outright (open loop it turned at ~2 % of the command, arcs
+  # too), so the yaw loop must supply the slip. Its default integral (ki 10, limit 3) wound up against that and swung
+  # the yaw rate 0.1-0.67 rad/s in a 0.3/0.3 arc; the linear integral overshot every start by ~45 %.
+  #   vel_ctl: linear kp 0.3, ki 1, limit 0.2 with feed-forward 0.95 (the wheel cylinder is 0.098 m, the calibrated
+  #   radius 0.0931: open loop drove +5 %); yaw kp 1, ki 5, limit 2 with feed-forward 2 (closer to the breakaway).
+  #   wheel_friction 0.3/0.3, min: equal static/dynamic and lower lateral grip halved the arc oscillation.
+  # Result (0.3/0.3 arc): yaw wobble 38 % -> 12 % of the command, overshoot 124 % -> 44 %; linear overshoot 44 % -> 16 %.
+  j100_0921:
+    vel_ctl: [0.3, 1.0, 0.2, 1.0, 5.0, 2.0, 0.95, 2.0]
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    end_effector: ee_cutter  # the real cutter + gripper on the 2F Lite (sim/scripts/ee_cutter.py), 2026-10-29
+    arm_base_mount: 0.048  # m from arm_0_base_link down to the top plate: Kinova's base mount kit stands there
+    # SIM_PHYSICS=newton (applied over the above by setup_scene.load_model_params), tuned 2026-10-20 with
+    # scripts/vel_tune and calibrate_velocity.py. The yaw wobble under Newton (13-33 % of the command) was the ground,
+    # not the gains: MuJoCo's cylinder-box contact jitters, so Newton now gets a ground plane (newton_ground_plane),
+    # and the wheels' 0.3 friction now reaches MuJoCo (bound on the colliders, priority over the ground's 0.9). On the
+    # plane, open loop drives 5 % fast and turns 8-11 % fast with < 1.5 % wobble, so the loop only trims (ff 0.95 /
+    # 0.92, small integrals, no P). Result: sweep 0.1-1.0 within 1 % (linear and yaw), step-test wobble 0.1-2.9 %,
+    # tilt < 1 deg; each turn starts with one ~0.2 s breakaway spike (79-128 % of a step command, also open loop).
+    # Newton only since 2026-10-20: massless frame links at 100 kg/m^3 (their made-up mass, high up, pitched it 1.5-2 deg
+    # on every deceleration and helped tip it under MPPI). The lighter top turns ~5 % slower in place and 13 % at
+    # 1 rad/s, so the yaw loop got ki_w 1.0, limit 0.35, ff_w 0.95: sweep within 1.5 %, in place -1.6 %, arcs +0.6/+2.6 %.
+    # wheel_damping 20 (was the importer's 1000): MuJoCo integrates the wheels' velocity-drive damping implicitly, which
+    # at 240 Hz adds ~4.2 kg*m^2 of fake inertia per wheel; with the 20 N*m cap the wheels spun up and down at only
+    # ~4.6 rad/s^2 while the chassis ran ahead/behind them (peak 0.70 for 0.50, -0.17 m/s roll-back after a stop), and
+    # MPPI, reading that speed, oscillated -0.3..0.8 m/s on a straight path. At 20: step overshoot 1-9 % (was 38-134 %,
+    # the turn breakaway spike gone too), stop 0.15-0.28 s, no roll-back, sweep 0.997-1.009, MPPI 8 m straight smooth.
+    newton:
+      vel_ctl: [0.0, 0.3, 0.05, 0.0, 1.0, 0.35, 0.95, 0.95]
+      massless_density: 100.0
+      frame_mass: 0.02
+      wheel_damping: 20
+      # NEWTON_SOLVER=vbd: a contact's ke is the mean of its two shapes' (default 2.5e3: the robot rocked at 2-3 Hz
+      # on its tyres whenever the arm pushed into the plant, 2026-11-08). 1e5 / 500 against the ground's default
+      # make the tyre ~5e4 N/m, 300 N*s/m per contact point.
+      vbd_wheel_contact: [100000.0, 500.0]
+      # NEWTON_SOLVER=vbd: VBD has no joint effort limits, so the finger's grip is its stiffness x how far the stems
+      # hold it from closed. At ee_cutter's 20 N*m/rad the stems pushed it 0.02-0.045 rad open (the pads 45-60 mm
+      # from its pivot: a 2-3.5 mm gap for 2 mm stems) and most cut pieces had 0-2 N on them and slid out (runs
+      # vbd_cut_stem13-16). At 200 (a stiff spring) the finger squeezed the stems at ~50 N a side; the cutter then
+      # pulls back pushing_dist with the gripper closed on still-rooted stems, which dragged it with ~100 N and at the
+      # far patch tipped the robot toward the plant up to 36 deg (vbd_cut_stem29-31). A force-limited finger instead:
+      # 10 N*m/rad aimed 0.05 rad past closed and stalled 0.05 rad ahead of the finger (ee_cutter FINGER_OVERCLOSE, a
+      # joint limit at closed) squeezes ~0.5 N*m, ~10 N at the pads (a chosen bound, the real grip force unknown),
+      # whatever the stems push the finger to (not stalled, a dragged stem pushed it 0.17 rad open and the squeeze
+      # rose to 55 N, vbd_cut_stem42); vbd_plant's GRIP_HOLD_N
+      # (3 N) keeps the cut pieces. Every uncut stem still clamped drags the gripper with up to ~2 x mu x the squeeze
+      # when the arm leaves, and the robot tips backward over its rear axle at ~50-100 N at the tool (tip_margin:
+      # 103 N at x 0.20, 75 at 0.26, 58 at 0.32, 47 at 0.38): at 0.1 (20 N) three stems were enough (vbd_cut_stem34).
+      # Damping 0.25 (was 2): a stalled drive moves the finger at most squeeze / damping, so at 2 the finger crept
+      # shut at 0.25 rad/s and the blade cut while it was still open (vbd_cut_stem43: 0 of 12 pieces held); at 0.25
+      # it follows the 2F Lite's ~1 rad/s with ~0.02 rad of lag, inside the stall.
+      # (with a VBD scene, VBD_SCENE, the scene's finger_gains / blade_gains are used instead: sim/config/vbd_scenes)
+      vbd_finger_gains: [10.0, 0.25, 0.05]
+      # The blade: 20 N*m/rad, its damping 0.5 (was 5: the blade lagged its target by ~1 rad and the spring pushed
+      # with ~20 N*m, 200-1000 N on stems it had already cut), its target stalled 0.05 rad ahead of it (ee_cutter
+      # BLADE_LAG): at most ~1 N*m, ~33 N at the edge, above vbd_plant's 15 N force cut, below what moves the robot.
+      vbd_blade_gains: [20.0, 0.5, 0.05]
+  # Drive tuned 2026-10-14 with scripts/vel_tune, same recipe as j100_0921 (see its comment). Open loop the Husky
+  # drove +7 % (wheel cylinder 0.1651 m, calibrated radius 0.1546: ff_v 0.937) and turned at 30 % (in place
+  # 0.3 rad/s), 3 % (arcs) of the command; the default yaw integral swung it ~25-30 % of the command everywhere.
+  # Yaw: kp 1, ki 3, limit 1.5, feed-forward 1.5 (it turns in place better than the Jackal, so less boost); linear
+  # integral limit 0.1. 0.3/0.3 arc: yaw wobble 27 % -> 9 %, overshoot 131 % -> 27 %; in place 0.3 rad/s wobble
+  # 24 % -> 4 %; linear overshoot 46 % -> 21 % (an arc's start still pushes it ~45 % for ~0.5 s: wheel coupling).
+  a200_0284:
+    vel_ctl: [0.3, 1.0, 0.1, 1.0, 3.0, 1.5, 0.937, 1.5]
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    newton:
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.924, 2.24]
+      wheel_max_force: 70
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/a200_0284_newton_* (best newton_cl3, sweep pass)
+  # Drive tuned 2026-10-14 with scripts/vel_tune, same recipe as j100_0921 / a200_0284. Open loop it drove +1.6 %
+  # (wheel cylinder 0.1651 m, generic radius 0.1625: ff_v 0.984) and turned at 33 % (in place 0.3 rad/s), 2.5 %
+  # (arcs) of the command; it turns in place well enough that a yaw feed-forward boost only added overshoot (ff_w 1).
+  # 0.3/0.3 arc: yaw wobble 21 % -> 8 %, overshoot 109 % -> 29 %; in place 0.3 rad/s wobble 15 % -> 5 %, overshoot
+  # 73 % -> 16 %; linear overshoot 44 % -> 22 %. Turning in place it now creeps forward ~0.02 m/s.
+  a300_00036:
+    vel_ctl: [0.3, 1.0, 0.2, 1.0, 3.0, 1.5, 0.984, 1.0]
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    newton:
+      wheel_max_force: 80
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.985, 2.107]
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/a300_00036_newton_* (best newton_cl1, sweep pass)
+  # Calibrated 2026-10-20 with scripts/vel_tune/calibrate_all.py (sim/CLAUDE.md "Velocity control" step 5), like the
+  # newton: blocks of the hand-tuned robots above: friction 0.3/0.3 min; PhysX gains = the hand-tuned sibling's yaw
+  # loop with ff_v from the open loop; Newton = feed-forward 1/open-loop ratio, small integrals, no P, and a wheel
+  # torque cap from the mass. All sweeps (0.1-1.0) within 2 % (r100 Newton: 1.0 rad/s 7 % fast); step-test yaw
+  # wobble PhysX 5-15 %, Newton 2-5 % (each turn starts with a ~0.2 s breakaway spike). Run files (gitignored):
+  # sim/generated/vel_check/<ns>_<engine>_*, calibrate_all.json.
+  j100:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.2, 1, 5, 2, 1.001, 2]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/j100_0000_physx_* (best physx_cl1, sweep pass)
+    newton:
+      wheel_max_force: 20
+      vel_ctl: [0, 0.3, 0.05, 0, 0.5, 0.15, 1.001, 0.958]
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/j100_0000_newton_* (best newton_cl1, sweep pass)
+  a200:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.1, 1, 3, 1.5, 1.003, 1.5]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/a200_0000_physx_* (best physx_cl1, sweep pass)
+    newton:
+      wheel_max_force: 60
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.992, 2.212]
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/a200_0000_newton_* (best newton_cl2, sweep pass)
+  a200_0333:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.1, 1, 1.5, 1.5, 1.015, 1.5]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/a200_0333_physx_* (best physx_cl2, sweep pass)
+    newton:
+      wheel_max_force: 60
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.986, 2.194]
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/a200_0333_newton_* (best newton_cl3, sweep pass)
+  a300:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.2, 1, 3, 1.5, 0.991, 1]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/a300_0000_physx_* (best physx_cl1, sweep pass)
+    newton:
+      wheel_max_force: 80
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 0.985, 1.629]
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/a300_0000_newton_* (best newton_cl1, sweep pass)
+  a300_00037:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 1, 0.2, 1, 3, 1.5, 1, 1]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/a300_00037_physx_* (best physx_cl1, sweep pass)
+    newton:
+      wheel_max_force: 100
+      vel_ctl: [0, 1, 0.2, 0, 1, 0.4, 1.018, 2.5]
+      wheel_damping: 50
+    # calibrate_all newton 2026-10-20 with wheel_damping 50 (best newton_cl1: arcs +10.6/+17.8 % with the linear
+    # integral at 0.05), then by hand as before: linear ki 1, limit 0.2 -> arcs -1.2/-1.6 %, sweep within 2.7 %
+    # (sim/generated/vel_check/a300_00037_newton_lin2)
+  r100:
+    wheel_friction: {static: 0.3, dynamic: 0.3, combine: min}
+    vel_ctl: [0.3, 3, 1, 0.5, 10, 3, 1.005, 1]
+    # calibrate_all physx 2026-10-20: sim/generated/vel_check/r100_0000_physx_* (best physx_cl1, sweep pass)
+    newton:
+      wheel_max_force: 90
+      vel_ctl: [0, 0.3, 0.05, 0, 1, 0.4, 1.001, 1.762]
+    # calibrate_all newton 2026-10-20: sim/generated/vel_check/r100_0000_newton_* (best newton_cl1, sweep pass)

@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harvesting Operation</title>
+<style>
+  :root {
+    --bg: #f5f6f8; --card: #fff; --fg: #1d2330; --muted: #6b7385; --line: #dde1e8;
+    --accent: #2f6fde; --ok: #1f9d55; --warn: #c98a00; --bad: #d64545; --set: #eef3fd; --plant: #9b7fd0;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #14171d; --card: #1c2029; --fg: #e4e7ee; --muted: #8a92a5; --line: #2c3240;
+            --accent: #5b8ff0; --set: #212a3b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.45 system-ui, sans-serif; }
+  header { padding: 14px 20px; border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  header h1 { font-size: 17px; margin: 0; }
+  header a { color: var(--accent); text-decoration: none; }
+  main { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 16px; padding: 16px 20px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } }
+  .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; min-width: 0; }
+  .card h2 { font-size: 14px; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
+  button { background: var(--accent); color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font: inherit; }
+  button.ghost { background: transparent; color: var(--fg); border: 1px solid var(--line); }
+  button.small { padding: 1px 8px; font-size: 12px; }
+  button.danger { background: var(--bad); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  input, select { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px; }
+  .pill { font-size: 12px; padding: 2px 8px; border-radius: 10px; border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .pill.ok { color: var(--ok); border-color: var(--ok); }
+  .pill.warn { color: var(--warn); border-color: var(--warn); }
+  .pill.bad { color: var(--bad); border-color: var(--bad); }
+  .pill.accent { color: var(--accent); border-color: var(--accent); }
+  .muted { color: var(--muted); }
+  .small { font-size: 12px; }
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  tr.offline td { opacity: .55; }
+  canvas { width: 100%; height: 560px; display: block; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); cursor: crosshair; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .counters { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0; }
+  .counter { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+  .counter b { font-size: 20px; display: block; }
+  .bar { height: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; display: flex; }
+  .bar i { display: block; height: 100%; }
+  .battery { display: inline-block; width: 60px; height: 10px; border: 1px solid var(--line); border-radius: 3px; vertical-align: middle; overflow: hidden; background: var(--bg); }
+  .battery i { display: block; height: 100%; background: var(--ok); }
+  .events { max-height: 320px; overflow: auto; font-size: 12px; }
+  .events div { padding: 2px 0; border-bottom: 1px solid var(--line); display: flex; gap: 8px; }
+  .events .ts { color: var(--muted); white-space: nowrap; }
+  .events .kind { white-space: nowrap; min-width: 9ch; }
+  .kind.harvested, .kind.complete, .kind.online, .kind.charged { color: var(--ok); }
+  .kind.attempt_failed, .kind.preempt, .kind.released, .kind.offline, .kind.pause { color: var(--warn); }
+  .kind.plant_failed, .kind.faulted { color: var(--bad); }
+  pre { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; margin: 8px 0 0;
+        max-height: 320px; overflow: auto; font: 12px/1.4 ui-monospace, monospace; white-space: pre-wrap; word-break: break-all; }
+  .job { display: flex; gap: 8px; align-items: center; padding: 3px 0; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 12px; }
+  .job.sel { background: var(--set); }
+  #tip { font-size: 12px; min-height: 18px; margin-top: 4px; }
+  #toast { position: fixed; bottom: 16px; right: 16px; background: var(--bad); color: #fff; padding: 8px 12px; border-radius: 6px; display: none; max-width: 60ch; }
+  #toast.ok { background: var(--ok); }
+  #jserr { color: var(--bad); font: 12px ui-monospace, monospace; padding: 0 20px; white-space: pre-wrap; }
+  #jserr:empty { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1><a href="/">Fleet Control</a> › Operation</h1>
+  <span id="bsPill" class="pill" title="the base station container (PostgreSQL, zenoh router, the coordinator)">base station: ?</span>
+  <span id="coordPill" class="pill" title="status_server (task_manager + status_server nodes) in the base station: the coordinator that assigns plants and charging to the robots">coordinator: ?</span>
+  <span id="opPill" class="pill" title="the operation's state (operation table)">operation: ?</span>
+  <span id="simPill" class="pill" title="the simulator shows harvested plants hidden (plants action); replayed after a sim restart">sim: ?</span>
+  <span id="updated" class="muted small" style="margin-left:auto"></span>
+</header>
+<div id="jserr"></div>
+<main>
+  <div class="col">
+    <section class="card">
+      <h2>Field <span class="muted" style="text-transform:none;letter-spacing:0">plants by state, robots live, chargers</span>
+        <label class="muted small" style="margin-left:auto;text-transform:none;letter-spacing:0"><input type="checkbox" id="showGraph" onchange="toggleGraph()"> route graph</label></h2>
+      <canvas id="field" onclick="fieldClick(event)"></canvas>
+      <div id="tip" class="muted">click a plant for its state</div>
+      <div class="legend">
+        <span><i style="background:var(--plant)"></i>pending</span>
+        <span><i style="background:var(--accent)"></i>assigned</span>
+        <span><i style="background:var(--ok);opacity:.5"></i>harvested</span>
+        <span><i style="background:var(--bad)"></i>failed</span>
+        <span><i style="background:var(--muted);border-radius:0"></i>charger (filled when reserved / occupied)</span>
+        <span>robot arrow: name · state · battery</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Robots</h2>
+      <div class="scroll"><table id="robots"><tr><th>robot</th><th>online</th><th>state</th><th>task</th><th>battery</th><th>node → target</th><th>job</th><th>last seen</th><th>operation</th></tr></table></div>
+      <p class="muted small" style="margin:8px 0 0">Add / Remove: whether the coordinator gives the robot work (a removed robot finishes its current task). Pause: finish the current task, then nothing new; Resume continues. Stop: the current task is cancelled (the plant goes back to pending, the arm is stowed); Start makes it active again. Charge: to its charger now.</p>
+    </section>
+  </div>
+  <div class="col">
+    <section class="card">
+      <h2>Operation <span id="opState" class="pill">?</span></h2>
+      <div class="counters">
+        <div class="counter"><b id="cHarvested">-</b>harvested</div>
+        <div class="counter"><b id="cAssigned">-</b>assigned</div>
+        <div class="counter"><b id="cPending">-</b>pending</div>
+        <div class="counter"><b id="cFailed">-</b>failed</div>
+      </div>
+      <div class="bar"><i id="barH" style="background:var(--ok)"></i><i id="barA" style="background:var(--accent)"></i><i id="barF" style="background:var(--bad)"></i></div>
+      <div id="rate" class="muted small" style="margin:4px 0 8px"></div>
+      <div class="row">
+        <button data-gate="opStart" onclick="control('start')" title="Operation running: the coordinator assigns pending plants (in the target rows) to idle robots, charging when a battery is low. Also enables the coordinator">Start</button>
+        <button class="ghost" data-gate="opPause" onclick="control('pause')" title="No new harvest tasks; robots finish the one they are on, a low battery still charges">Pause</button>
+        <button class="ghost" data-gate="opResume" onclick="control('resume')" title="Assignments continue">Resume</button>
+        <button class="ghost" data-gate="opStop" onclick="confirm('Stop the operation? Harvest tasks are cancelled now (plants back to pending, arms stowed) and the robots park at their chargers.') && control('stop')" title="Cancel every harvest task now (plants back to pending, arms stowed) and send the robots to their chargers; charging continues. Pause lets the current task finish">Stop</button>
+        <button class="danger small" data-gate="opReset" onclick="resetState()" title="Every plant pending again (attempts 0), open harvest jobs released, hidden plants shown again. Only while stopped or complete">Reset harvest state</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="muted small">target rows</span>
+        <span id="rowChecks" class="row" style="margin:0"></span>
+        <button class="ghost small" data-gate="opTarget" onclick="applyTarget()" title="Which rows the operation harvests (none checked = all). Read at the next assignment">Apply target</button>
+      </div>
+      <div class="row">
+        <label class="muted small">max attempts per plant <input type="number" id="maxAttempts" min="1" max="20" style="width:60px"></label>
+        <button class="ghost small" data-gate="opTarget" onclick="applyMaxAttempts()">Apply</button>
+      </div>
+    </section>
+    <section class="card">
+      <h2>Coordinator <span id="coordState" class="pill">?</span></h2>
+      <div id="coordInfo" class="muted small"></div>
+      <div class="row">
+        <button class="ghost" data-gate="coordStart" onclick="coordinator('start')" title="Run status_server in the base station (its supervisor keeps it running until stopped)">Start</button>
+        <button class="ghost" data-gate="coordStop" onclick="coordinator('stop')" title="Stop status_server: robots keep executing the task they hold, nothing new is assigned">Stop</button>
+        <button class="ghost" onclick="toggleLog()">Log</button>
+      </div>
+      <pre id="coordLog" style="display:none"></pre>
+    </section>
+    <section class="card">
+      <h2>Events</h2>
+      <div id="events" class="events"></div>
+    </section>
+    <section class="card">
+      <h2>Jobs</h2>
+      <div id="jobs"></div>
+      <div id="jobTitle" class="muted small" style="margin-top:6px"></div>
+      <pre id="jobLog" style="display:none"></pre>
+    </section>
+  </div>
+</main>
+<div id="toast"></div>
+<script>
+window.onerror = (m, src, line) => { document.getElementById('jserr').textContent = `page error: ${m} (line ${line})`; };
+let op = null, runningJobs = [], selectedJob = null, lastJobStatus = {}, graph = null, showLog = false, plantsById = {};
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+async function api(path, body) {
+  const opt = body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+  const r = await fetch(path, opt);
+  const data = await r.json();
+  if (!r.ok) throw Object.assign(new Error(data.error || r.statusText), { data });
+  return data;
+}
+function toast(msg, ok = false) { const t = document.getElementById('toast'); t.textContent = msg; t.className = ok ? 'ok' : ''; t.style.display = 'block'; setTimeout(() => t.style.display = 'none', 6000); }
+async function post(path, body = {}) {
+  try { const job = await api(path, body); if (job && job.id) { selectedJob = job.id; refreshJobs(); } return job; } catch (e) { toast(e.message); }
+}
+// RobotStatus.status values (husky_operations_manager / status_server enums)
+const STATUS_NAMES = { 0: 'IDLE', 1: 'JOB_START', 2: 'JOB_DONE', 3: 'START_MOVING', 4: 'MOVING', 5: 'DESTINATION_REACHED',
+  6: 'START_HARVESTING', 7: 'HARVESTING', 8: 'DONE_HARVESTING', 9: 'START_DOCKING', 10: 'DOCKING', 11: 'DONE_DOCKING',
+  12: 'START_LOADING', 13: 'LOADING', 14: 'DONE_LOADING', 15: 'START_UNDOCKING', 16: 'UNDOCKING', 17: 'DONE_UNDOCKING',
+  18: 'START_UNLOADING', 19: 'UNLOADING', 20: 'DONE_UNLOADING', 21: 'START_CHARGING', 22: 'CHARGING', 23: 'DONE_CHARGING',
+  92: 'INITIALIZING', 94: 'ERROR', 95: 'PAUSED', 96: 'MAINTENANCE', 97: 'OFFLINE', 98: 'EMERGENCY_STOP', 99: 'ABNORMAL' };
+const statusName = v => STATUS_NAMES[+v] ?? (v === null || v === undefined || v === '' ? '?' : String(v));
+const TASK_TYPES = { 0: 'charging', 1: 'harvest', 2: 'unloading' };
+const fmtAge = t => { if (!t) return 'never'; const s = (Date.now() - new Date(t).getTime()) / 1000; return s < 60 ? `${s.toFixed(0)} s ago` : s < 3600 ? `${(s / 60).toFixed(0)} min ago` : `${(s / 3600).toFixed(1)} h ago`; };
+
+// ------------------------------------------------------------ gates (as index.html: data-gate="<rule>" -> reason or '')
+const busy = lock => { const j = runningJobs.find(j => j.lock === lock); return j ? `${j.name} is running` : ''; };
+const GATES = {
+  opStart: () => bsDown() || (!opStateIs('stopped', 'complete', 'paused') ? 'already running' : '') || busy('basestation'),
+  opPause: () => bsDown() || (!opStateIs('running') ? 'not running' : ''),
+  opResume: () => bsDown() || (!opStateIs('paused') ? 'not paused' : ''),
+  opStop: () => bsDown() || (!opStateIs('running', 'paused') ? 'not running' : ''),
+  opReset: () => bsDown() || (!opStateIs('stopped', 'complete') ? 'stop the operation first' : '') || busy('basestation')
+    || (openHarvestJobs() ? 'a harvest task is still open' : ''),
+  opTarget: () => bsDown(),
+  coordStart: () => bsDown() || (coord().running ? 'already running' : '') || (coordEnabled() ? 'enabled, starting' : '')
+    || (coord().built === false ? 'build colcon_ws first (scripts/colcon_build.sh)' : '') || busy('basestation'),
+  coordStop: () => bsDown() || (!coordEnabled() && !coord().running ? 'not running' : '') || busy('basestation'),
+  // per-robot (data-robot = serial): the robot's row in db().robots
+  rbAdd: r => bsDown() || (r.enrolled !== false ? 'already in the operation' : ''),
+  rbRemove: r => bsDown() || (r.enrolled === false ? 'already removed' : ''),
+  rbStart: r => bsDown() || (r.op_state !== 'stopped' ? 'not stopped' : ''),
+  rbResume: r => bsDown() || (r.op_state !== 'paused' ? 'not paused' : ''),
+  rbPause: r => bsDown() || (r.op_state !== 'active' ? 'not active' : ''),
+  rbStop: r => bsDown() || (r.op_state === 'stopped' ? 'already stopped' : '') || (r.request === 'stop' ? 'stop requested' : ''),
+  rbCharge: r => bsDown() || (r.request ? `${r.request} already requested` : '') || (r.job && r.job.type === 0 ? 'already on a charging task' : '') || (r.op_state === 'stopped' ? 'stopped: press Start first' : ''),
+};
+async function robotAct(serial, action) {
+  if (action === 'stop' && !window.confirm(`Stop ${serial}? Its current task is cancelled and the arm stowed.`)) return;
+  try { const r = await api('/api/operation/robot', { serial, action }); toast(`${serial}: ${action} (${r.enrolled ? r.state : 'removed'}${r.request ? ', ' + r.request + ' requested' : ''})`, true); }
+  catch (e) { toast(e.message); }
+  setTimeout(pollOperation, 300);
+}
+const db = () => (op && op.db) || null;
+const coord = () => (op && op.coordinator) || {};
+const coordEnabled = () => !!((db() || {}).operation || {}).coordinator_enabled;
+const bsDown = () => (!op || op.basestation !== 'running') ? 'start the base station on the main page' : (!db() ? (op.db_error ? 'database: ' + op.db_error : 'waiting for the database') : '');
+const opStateIs = (...states) => states.includes(((db() || {}).operation || {}).state);
+const openHarvestJobs = () => ((db() || {}).robots || []).some(r => r.job && r.job.type === 1);
+function applyGates() {
+  document.querySelectorAll('[data-gate]').forEach(el => {
+    const rule = GATES[el.dataset.gate];
+    if (!rule) { console.warn('no gate rule', el.dataset.gate); return; }
+    const robot = el.dataset.robot ? ((db() || {}).robots || []).find(r => r.serial === el.dataset.robot) : null;
+    const reason = el.dataset.robot && !robot ? 'unknown robot' : rule(robot);
+    el.disabled = !!reason;
+    const base = el.dataset.title ?? (el.dataset.title = el.title || '');
+    el.title = reason ? `Not now: ${reason}` + (base ? `\n${base}` : '') : base;
+  });
+}
+
+// ------------------------------------------------------------ polling
+let opTimer = null;
+async function pollOperation() {
+  clearTimeout(opTimer);
+  if (document.visibilityState === 'visible') {
+    try { op = await api('/api/operation'); render(); } catch (e) {
+      document.getElementById('updated').textContent = e.message === 'not found' ? 'this server is older than the page: restart tools/sim_ui/server.py' : e.message;
+    }
+  }
+  opTimer = setTimeout(pollOperation, 2000);
+}
+document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && pollOperation());
+
+function render() {
+  const d = db(), o = (d || {}).operation || {}, c = coord(), bridge = op.bridge || {};
+  const pill = (id, text, cls) => { const e = document.getElementById(id); e.textContent = text; e.className = 'pill ' + cls; };
+  pill('bsPill', 'base station: ' + (op.basestation || 'not created'), op.basestation === 'running' ? 'ok' : 'bad');
+  const cText = c.error ? 'error' : c.running ? `running (${c.nodes} nodes)` : o.coordinator_enabled ? (c.supervised === false ? 'enabled, no supervisor' : c.built === false ? 'enabled, not built' : 'enabled, starting') : 'off';
+  pill('coordPill', 'coordinator: ' + cText, c.running ? 'ok' : o.coordinator_enabled ? 'warn' : '');
+  pill('coordState', cText, c.running ? 'ok' : o.coordinator_enabled ? 'warn' : '');
+  document.getElementById('coordInfo').textContent = c.error ? c.error : (c.running ? `pid ${c.pid}` : '') + (c.supervised === false ? ' · recreate the base station for the supervisor (or run scripts/basestation_coordinator.sh in it)' : '');
+  const st = o.state || (op.db_error ? 'database error' : '?');
+  pill('opPill', 'operation: ' + st, st === 'running' ? 'ok' : st === 'paused' ? 'warn' : st === 'complete' ? 'accent' : st === 'stopped' ? '' : 'bad');
+  pill('opState', st, st === 'running' ? 'ok' : st === 'paused' ? 'warn' : st === 'complete' ? 'accent' : '');
+  const simText = bridge.sim === 'ok' ? `${bridge.hidden ?? 0} of ${bridge.harvested ?? 0} harvested plants hidden` + (bridge.error ? ` (${bridge.error})` : '') : (bridge.sim || '?');
+  pill('simPill', 'sim: ' + simText, bridge.sim === 'ok' && !bridge.error ? 'ok' : bridge.sim === 'not running' ? '' : 'warn');
+  const upd = document.getElementById('updated');
+  upd.textContent = op.db_error ? 'database: ' + op.db_error : (op.probed ? 'updated ' + new Date(op.probed * 1000).toLocaleTimeString() + (op.stale ? ' (stale, refreshing…)' : '') : '');
+  upd.style.color = op.stale ? 'var(--warn)' : '';
+  if (!d) { applyGates(); return; }
+  // counters
+  const cnt = d.counters || {}, h = cnt.harvested || 0, a = cnt.assigned || 0, p = cnt.pending || 0, f = cnt.failed || 0, total = h + a + p + f;
+  for (const [id, v] of [['cHarvested', h], ['cAssigned', a], ['cPending', p], ['cFailed', f]]) document.getElementById(id).textContent = v;
+  const pct = v => total ? (100 * v / total).toFixed(1) + '%' : '0%';
+  document.getElementById('barH').style.width = pct(h); document.getElementById('barA').style.width = pct(a); document.getElementById('barF').style.width = pct(f);
+  const rate = d.rate15 || 0, eta = rate ? (p + a) / rate * 15 : null;
+  document.getElementById('rate').textContent = `${total} plants in the target rows (${o.target_rows ? 'rows ' + o.target_rows.join(', ') : 'all rows'}) · ${rate} harvested in the last 15 min` +
+    (eta !== null ? ` · ~${eta < 60 ? eta.toFixed(0) + ' min' : (eta / 60).toFixed(1) + ' h'} left at this rate` : '') + (o.started_at ? ` · started ${new Date(o.started_at).toLocaleString()}` : '');
+  // target rows checkboxes (built once; re-synced only while not being edited)
+  const rc = document.getElementById('rowChecks');
+  if (!rc.children.length && d.rows) rc.innerHTML = d.rows.map(r => `<label class="small"><input type="checkbox" value="${r}"> ${r}</label>`).join('');
+  if (!rc.dataset.touched) rc.querySelectorAll('input').forEach(i => i.checked = !!(o.target_rows || []).includes(+i.value));
+  rc.onchange = () => rc.dataset.touched = '1';
+  const ma = document.getElementById('maxAttempts');
+  if (document.activeElement !== ma && o.max_attempts !== undefined) ma.value = o.max_attempts;
+  // robots
+  const robots = d.robots || [];
+  document.getElementById('robots').innerHTML = '<tr><th>robot</th><th>online</th><th>state</th><th>task</th><th>battery</th><th>node → target</th><th>job</th><th>last seen</th><th>operation</th></tr>' +
+    robots.map(r => {
+      const online = r.online_flag === 1, name = statusName(r.status), b = r.battery === null || r.battery === undefined ? null : +r.battery;
+      const rs = r.op_state || 'active', enrolled = r.enrolled !== false, sr = esc(r.serial);
+      const btn = (action, label, gate, title, cls = 'ghost') => `<button class="${cls} small" data-gate="${gate}" data-robot="${sr}" onclick="robotAct('${sr}', '${action}')" title="${title}">${label}</button>`;
+      const controls = online ? `<div class="row" style="margin:0;gap:4px">
+          <span class="pill ${!enrolled ? 'warn' : rs === 'active' ? 'ok' : rs === 'paused' ? 'warn' : 'bad'}">${!enrolled ? 'removed' : rs}${r.request ? ' · ' + esc(r.request) + ' requested' : ''}</span>
+          ${enrolled ? btn('remove', 'Remove', 'rbRemove', 'Exclude this robot from the operation: no new tasks (the current one finishes)')
+                     : btn('add', 'Add', 'rbAdd', 'Include this robot in the operation')}
+          ${rs === 'stopped' ? btn('start', 'Start', 'rbStart', 'Active again: the coordinator assigns it work')
+            : rs === 'paused' ? btn('resume', 'Resume', 'rbResume', 'Active again')
+            : btn('pause', 'Pause', 'rbPause', 'Finish the current task, then nothing new')}
+          ${rs !== 'stopped' ? btn('stop', 'Stop', 'rbStop', 'Cancel the current task now: the plant goes back to pending, the arm is stowed, nothing new until Start', 'danger') : ''}
+          ${btn('charge', 'Charge', 'rbCharge', 'Send it to its charger now (its plant is released); a cut or docking in progress finishes first')}
+        </div>` : '<span class="muted small">offline</span>';
+      return `<tr class="${online ? '' : 'offline'}"><td><b>${esc(r.serial)}</b><br><span class="muted small">${esc(r.name)} · ${esc(r.type)}</span></td>
+        <td><span class="pill ${online ? 'ok' : r.online_flag === 10 ? 'bad' : ''}">${online ? 'online' : r.online_flag === 10 ? 'e-stop' : r.online_flag === 11 ? 'abnormal' : 'offline'}</span></td>
+        <td><span class="pill ${name === 'ERROR' || name === 'ABNORMAL' ? 'bad' : name === 'IDLE' || name === 'OFFLINE' ? '' : 'ok'}">${esc(name)}</span></td>
+        <td class="small">${esc(r.task || '')}</td>
+        <td>${b === null ? '?' : `<span class="battery"><i style="width:${Math.max(0, Math.min(100, b))}%;background:${b < 15 ? 'var(--bad)' : b < 30 ? 'var(--warn)' : 'var(--ok)'}"></i></span> ${b.toFixed(0)}%`}</td>
+        <td class="small">${r.node ?? '?'} → ${r.target_node ?? '-'}</td>
+        <td class="small">${r.job ? `#${r.job.id} ${TASK_TYPES[r.job.type] || r.job.type} ${esc(r.job.schedule)}` : '-'}</td>
+        <td class="small muted">${fmtAge(r.updated_at)}</td>
+        <td>${controls}</td></tr>`; }).join('');
+  // events
+  document.getElementById('events').innerHTML = (d.events || []).map(e =>
+    `<div><span class="ts">${new Date(e.ts).toLocaleTimeString()}</span><span class="kind ${esc(e.kind)}">${esc(e.kind)}</span><span>${e.robot ? `<b>${esc(e.robot)}</b> ` : ''}${esc(e.message)}</span></div>`).join('');
+  if (showLog && c.log_tail !== undefined) document.getElementById('coordLog').textContent = c.log_tail + (c.supervisor_tail ? '\n--- supervisor\n' + c.supervisor_tail : '');
+  plantsById = {}; (d.plants || []).forEach(p => plantsById[p[0]] = p);
+  drawField();
+  applyGates();
+}
+
+// ------------------------------------------------------------ field map
+let view = null;
+function drawField() {
+  const cv = document.getElementById('field'), d = db();
+  if (!cv || !d) return;
+  const dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr;
+  const g = cv.getContext('2d'); g.scale(dpr, dpr);
+  const css = getComputedStyle(document.documentElement), col = v => css.getPropertyValue(v).trim();
+  const plants = d.plants || [], robots = (d.robots || []).filter(r => r.x !== null && r.x !== undefined), chargers = d.chargers || [];
+  const pts = [...plants.map(p => [p[2], p[3]]), ...robots.map(r => [r.x, r.y]), ...chargers.map(c => [c.x_coord, c.y_coord])];
+  if (!pts.length) return;
+  const x0 = Math.min(...pts.map(p => p[0])) - 1.5, x1 = Math.max(...pts.map(p => p[0])) + 1.5;
+  const y0 = Math.min(...pts.map(p => p[1])) - 1.5, y1 = Math.max(...pts.map(p => p[1])) + 1.5;
+  const s = Math.min(W / (x1 - x0), H / (y1 - y0)), ox = (W - s * (x1 - x0)) / 2, oy = (H - s * (y1 - y0)) / 2;
+  const X = x => ox + (x - x0) * s, Y = y => H - oy - (y - y0) * s;
+  view = { s, X, Y, inv: (px, py) => [x0 + (px - ox) / s, y0 + (H - oy - py) / s] };
+  g.strokeStyle = col('--line'); g.lineWidth = 1; g.fillStyle = col('--muted'); g.font = '10px system-ui';
+  for (let gx = Math.ceil(x0); gx <= x1; gx++) { g.globalAlpha = gx % 5 ? 0.2 : 0.6; g.beginPath(); g.moveTo(X(gx), 0); g.lineTo(X(gx), H); g.stroke(); }
+  for (let gy = Math.ceil(y0); gy <= y1; gy++) { g.globalAlpha = gy % 5 ? 0.2 : 0.6; g.beginPath(); g.moveTo(0, Y(gy)); g.lineTo(W, Y(gy)); g.stroke(); }
+  g.globalAlpha = 1; g.fillText('x →', W - 26, Y(0) - 3); g.fillText('y ↑', X(0) + 3, 10);
+  // graph overlay
+  if (graph && document.getElementById('showGraph').checked) {
+    const byId = {}; (graph.nodes || []).forEach(n => byId[n[0]] = n);
+    g.strokeStyle = col('--line'); g.globalAlpha = 0.6; g.lineWidth = 1;
+    (graph.edges || []).forEach(([a, b]) => { const na = byId[a], nb = byId[b]; if (na && nb) { g.beginPath(); g.moveTo(X(na[2]), Y(na[3])); g.lineTo(X(nb[2]), Y(nb[3])); g.stroke(); } });
+    g.globalAlpha = 1; g.fillStyle = col('--muted');
+    (graph.nodes || []).forEach(n => { if (n[1] !== 'Pickup') { g.beginPath(); g.arc(X(n[2]), Y(n[3]), 2, 0, 7); g.fill(); } });
+  }
+  // row bands from the plants
+  const rows = {};
+  plants.forEach(p => { const r = rows[p[1]] ||= { xs: [], ys: [] }; r.xs.push(p[2]); r.ys.push(p[3]); });
+  g.fillStyle = col('--plant'); g.globalAlpha = 0.15;
+  Object.values(rows).forEach(r => { const y = r.ys.reduce((a, b) => a + b, 0) / r.ys.length; g.fillRect(X(Math.min(...r.xs) - 0.4), Y(y) - 0.5 * s, (Math.max(...r.xs) - Math.min(...r.xs) + 0.8) * s, 1.0 * s); });
+  g.globalAlpha = 1;
+  // plants
+  const rad = Math.max(2, 0.22 * s);
+  plants.forEach(p => {
+    const st = p[4];
+    g.globalAlpha = st === 'harvested' ? 0.45 : 1;
+    g.fillStyle = st === 'harvested' ? col('--ok') : st === 'assigned' ? col('--accent') : st === 'failed' ? col('--bad') : col('--plant');
+    g.beginPath(); g.arc(X(p[2]), Y(p[3]), rad, 0, 7); g.fill();
+    if (st === 'assigned') { g.strokeStyle = col('--accent'); g.lineWidth = 2; g.beginPath(); g.arc(X(p[2]), Y(p[3]), rad + 3, 0, 7); g.stroke(); }
+  });
+  g.globalAlpha = 1;
+  // chargers
+  const docks = d.docks || [];
+  chargers.forEach(c => {
+    const dock = docks.find(k => k.dock_id === c.dock_id), used = dock && dock.status > 0;
+    const r = 0.25 * s;
+    g.fillStyle = col('--muted'); g.strokeStyle = col('--muted'); g.lineWidth = 2;
+    if (used) g.fillRect(X(c.x_coord) - r, Y(c.y_coord) - r, 2 * r, 2 * r); else g.strokeRect(X(c.x_coord) - r, Y(c.y_coord) - r, 2 * r, 2 * r);
+    g.fillStyle = col('--fg'); g.font = '11px system-ui';
+    g.fillText(`${c.dock_id || 'charger ' + c.id} (tag ${c.apriltag_id})` + (used ? ` · robot ${dock.robot_id ?? ''}` : ''), X(c.x_coord) + r + 3, Y(c.y_coord) + 4);
+  });
+  // robots
+  robots.forEach(rb => {
+    const online = rb.online_flag === 1, r = 0.45 * s;
+    g.save(); g.translate(X(rb.x), Y(rb.y)); g.rotate(-(rb.yaw || 0));
+    g.globalAlpha = online ? 0.9 : 0.4; g.fillStyle = statusName(rb.status) === 'ERROR' ? col('--bad') : col('--accent');
+    g.fillRect(-r, -r * 0.75, 2 * r, 1.5 * r);
+    g.beginPath(); g.moveTo(r * 1.5, 0); g.lineTo(r * 0.6, -r * 0.5); g.lineTo(r * 0.6, r * 0.5); g.fill();
+    g.restore();
+    g.globalAlpha = 1; g.fillStyle = col('--fg'); g.font = 'bold 11px system-ui';
+    const b = rb.battery === null || rb.battery === undefined ? '' : ` · ${(+rb.battery).toFixed(0)}%`;
+    g.fillText(`${rb.serial} · ${statusName(rb.status)}${b}`, X(rb.x) + r + 4, Y(rb.y) - r);
+  });
+}
+function fieldClick(ev) {
+  if (!view || !db()) return;
+  const rect = ev.target.getBoundingClientRect(), [wx, wy] = view.inv(ev.clientX - rect.left, ev.clientY - rect.top);
+  let best = null, bd = 0.6;
+  (db().plants || []).forEach(p => { const dd = Math.hypot(p[2] - wx, p[3] - wy); if (dd < bd) { bd = dd; best = p; } });
+  const tip = document.getElementById('tip');
+  if (!best) { tip.textContent = `(${wx.toFixed(2)}, ${wy.toFixed(2)})`; return; }
+  const robot = ((db().robots || []).find(r => r.id === best[5]) || {}).serial;
+  tip.innerHTML = `plant <b>${best[0]}</b> (row ${best[1]}) at (${best[2]}, ${best[3]}): <b>${esc(best[4])}</b>` +
+    (robot ? ` · robot ${esc(robot)}` : '') + (best[6] ? ` · ${best[6]} attempt(s)` : '') + (best[7] ? ` · last error: ${esc(best[7])}` : '');
+}
+async function toggleGraph() {
+  if (document.getElementById('showGraph').checked && !graph) { try { graph = await api('/api/operation/graph'); } catch (e) { toast(e.message); } }
+  drawField();
+}
+window.addEventListener('resize', drawField);
+
+// ------------------------------------------------------------ actions
+async function control(action, extra = {}) {
+  try { const r = await api('/api/operation/control', { action, ...extra }); toast(`operation: ${r.state}`, true); } catch (e) { toast(e.message); }
+  setTimeout(pollOperation, 300);
+}
+function applyTarget() {
+  const rc = document.getElementById('rowChecks');
+  const rows = [...rc.querySelectorAll('input:checked')].map(i => +i.value);
+  rc.dataset.touched = '';
+  control('target', { rows: rows.length ? rows : null });
+}
+function applyMaxAttempts() { control('max_attempts', { max_attempts: +document.getElementById('maxAttempts').value }); }
+function coordinator(action) { post('/api/operation/coordinator', { action }); setTimeout(pollOperation, 1500); }
+function resetState() {
+  const d = db() || {}, c = d.counters || {};
+  if (!confirm(`Reset the harvest state? ${c.harvested || 0} harvested and ${c.failed || 0} failed plants become pending again, and the sim shows them again.`)) return;
+  post('/api/operation/reset');
+}
+async function toggleLog() {
+  showLog = !showLog;
+  const pre = document.getElementById('coordLog');
+  pre.style.display = showLog ? 'block' : 'none';
+  if (showLog) { try { pre.textContent = (await api('/api/operation/log?n=300')).log; } catch (e) { pre.textContent = e.message; } }
+}
+
+// ------------------------------------------------------------ jobs (as index.html)
+let jobsTimer = null, jobsInFlight = false;
+async function refreshJobs() {
+  clearTimeout(jobsTimer);
+  if (jobsInFlight) return;
+  jobsInFlight = true;
+  let running = false;
+  try { running = await updateJobs(); } catch (e) { /* keep polling */ }
+  finally { jobsInFlight = false; jobsTimer = setTimeout(refreshJobs, running ? 1000 : 3000); }
+}
+async function updateJobs() {
+  const jobs = await api('/api/jobs');
+  runningJobs = jobs.filter(j => j.status === 'running');
+  applyGates();
+  const mine = jobs.filter(j => /coordinator|harvest state/.test(j.name)).slice(0, 8);
+  document.getElementById('jobs').innerHTML = mine.length ? mine.map(j => `<div class="job ${j.id === selectedJob ? 'sel' : ''}" onclick="selectedJob='${j.id}';refreshJobs()">
+    <span class="pill ${j.status === 'done' ? 'ok' : j.status === 'failed' ? 'bad' : 'warn'}">${j.status}</span><span>${esc(j.name)}</span>
+    <span class="muted" style="margin-left:auto">${new Date(j.started * 1000).toLocaleTimeString()}</span></div>`).join('') : '<span class="muted small">none yet</span>';
+  const finished = jobs.filter(j => j.status !== 'running' && lastJobStatus[j.id] === 'running');
+  jobs.forEach(j => lastJobStatus[j.id] = j.status);
+  if (finished.length) setTimeout(pollOperation, 500);
+  if (selectedJob) {
+    try {
+      const j = await api('/api/job?id=' + selectedJob);
+      document.getElementById('jobTitle').textContent = `${j.name} -- ${j.status}`;
+      const pre = document.getElementById('jobLog'); pre.style.display = 'block'; pre.textContent = j.log.join('\n');
+    } catch (e) { /* gone */ }
+  }
+  return runningJobs.length > 0;
+}
+
+pollOperation();
+refreshJobs();
+</script>
+</body>
+</html>

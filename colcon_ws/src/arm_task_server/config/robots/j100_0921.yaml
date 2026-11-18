@@ -1,0 +1,5 @@
+# Per-robot overrides for arm_task_server, applied after config/arm_task_server.yaml (file name = the robot's ROS
+# namespace). Only list what differs from the shared defaults.
+/**:
+  ros__parameters:
+    velocity_scale: 0.8         # GO STOW / GO READY / GO DROP (velocity and acceleration scaling)

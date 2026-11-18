@@ -1,0 +1,5 @@
+{
+ "imu_0_base_link": "top_plate_link",
+ "imu_0_link": "top_plate_link",
+ "top_plate_mount_c2": "top_plate_link"
+}

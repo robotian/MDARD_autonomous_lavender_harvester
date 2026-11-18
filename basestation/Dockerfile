@@ -1,0 +1,53 @@
+# Base station: stands in for the farm's base-station PC. A ROS 2 Jazzy computer on the robots' network
+# (simulated or real) that also hosts the harvesting operation's PostgreSQL database. Built on the robot image
+# so the ROS packages, RMWs and Python deps (psycopg for status_server) match the robots' exactly; build that
+# first (`docker compose build robot0`).
+ARG BASE_IMAGE=clearpath-robot:jazzy
+FROM ${BASE_IMAGE}
+
+# PostgreSQL from the PGDG repo rather than Ubuntu's 16, so pg_restore can read dumps made by a newer server
+# (it refuses archives from a newer pg_dump). A data volume is tied to its major version: changing PG_MAJOR
+# needs a dump, `docker volume rm basestation_pgdata` and a restore.
+ARG PG_MAJOR=18
+ENV PG_MAJOR=${PG_MAJOR}
+RUN install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt noble-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    # no default cluster at install: entrypoint.sh creates its own in the data volume
+    && mkdir -p /etc/postgresql-common/createcluster.d \
+    && echo 'create_main_cluster = false' > /etc/postgresql-common/createcluster.d/no-main.conf \
+    && apt-get update && apt-get install -y --no-install-recommends postgresql-${PG_MAJOR} \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cyclone DDS for a real robot that runs it (BASESTATION_RMW=rmw_cyclonedds_cpp, basestation.compose.yml). Here
+# rather than in the robot image: adding it there re-runs that image's apt layer, which pulls newer Clearpath
+# packages (2026-10-07: its RealSense xacro patch no longer applied).
+RUN apt-get update && apt-get install -y --no-install-recommends ros-jazzy-rmw-cyclonedds-cpp \
+    && rm -rf /var/lib/apt/lists/*
+ENV PATH=/usr/lib/postgresql/${PG_MAJOR}/bin:$PATH \
+    PGDATA=/var/lib/postgresql/data \
+    PGHOST=/run/postgresql
+
+# The robot image's /etc/ros_env.sh prefers /etc/clearpath/setup.bash, which only a robot's entrypoint
+# writes; here it's plain ROS plus the shared colcon_ws (RMW/domain come from the environment).
+RUN printf '%s\n' \
+        'source /opt/ros/jazzy/setup.bash' \
+        '[ -f /home/robot/colcon_ws/install/setup.bash ] && source /home/robot/colcon_ws/install/setup.bash' \
+        'true' > /etc/ros_env.sh
+
+# The base station's zenoh router (entrypoint.sh): eclipse/zenoh's zenohd 1.10.1, like the fleet's zenoh-router, not
+# Jazzy's rmw_zenohd (zenoh 1.8.0), which a router it links going away put into a 100 % CPU loop for good (the sim's
+# zenoh-router restarted, 2026-10-21). The glibc build from the release (the eclipse/zenoh image is Alpine/musl).
+ARG ZENOHD_VERSION=1.10.1
+ARG ZENOHD_SHA256=512ac81438fd995ca2db02f75dd83afa048b6a11630ee10e0cb4dc423c39a5e9
+RUN curl -fsSL -o /tmp/zenoh.zip "https://github.com/eclipse-zenoh/zenoh/releases/download/${ZENOHD_VERSION}/zenoh-${ZENOHD_VERSION}-x86_64-unknown-linux-gnu-standalone.zip" \
+    && echo "${ZENOHD_SHA256}  /tmp/zenoh.zip" | sha256sum -c - \
+    && python3 -c "import zipfile; zipfile.ZipFile('/tmp/zenoh.zip').extract('zenohd', '/usr/local/bin')" \
+    && chmod +x /usr/local/bin/zenohd && rm /tmp/zenoh.zip
+
+COPY entrypoint.sh /basestation-entrypoint.sh
+# schema migrations (basestation/migrations/, mounted at /migrations by basestation.compose.yml)
+COPY migrate.sh /basestation-migrate.sh
+RUN chmod +x /basestation-entrypoint.sh /basestation-migrate.sh
+ENTRYPOINT ["/basestation-entrypoint.sh"]
+CMD ["sleep", "infinity"]

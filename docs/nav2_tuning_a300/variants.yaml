@@ -1,0 +1,270 @@
+# Nav2 variants benchmarked for docs/nav2_tuning_a300.md: each one is merged over the baseline
+# (mtu32_bringup config/a300/nav2_map.yaml as of mtu32_husky 76f841b) in the param_overrides layout of
+# config/nav2_robots.yaml, a FollowPath block replacing MPPI's whole. Runs: results.json (label a3_<variant>_r<n>,
+# A2f_10 as a3_A2f10; a3_A2i_r1 was discarded, its rerun is r1b;
+# base = baseline). A2e is the committed config. The BT path is
+# config/behavior_trees/navigate_through_poses_replan_if_invalid.xml (added with the j100 tuning).
+A2:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.05}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.25,
+        max_lookahead: 1.0, k_phi: 2.0, k_delta: 1.0, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0,
+        v_angular_min_in_place: 0.25, slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: true, rotation_scaling_factor: 0.5,
+        allow_backward: false, in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2b:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.05}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.25,
+        max_lookahead: 1.0, k_phi: 2.0, k_delta: 1.0, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0,
+        v_angular_min_in_place: 0.25, slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5,
+        allow_backward: false, in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2c:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.05}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.25,
+        max_lookahead: 1.0, k_phi: 2.0, k_delta: 1.0, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0,
+        v_angular_min_in_place: 0.5, slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5,
+        allow_backward: false, in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2e:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.05}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2f:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2f_10:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 1.0, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [1.0, 0.0, 1.0]
+      min_velocity: [-1.0, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2g:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.8,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.2, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 1.0, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 1.5, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [1.0, 0.0, 1.0]
+      min_velocity: [-1.0, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2h:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.8,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.6, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 1.0, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 1.5, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [1.0, 0.0, 1.0]
+      min_velocity: [-1.0, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2i:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.6, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 1.0, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 1.2, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [1.0, 0.0, 1.0]
+      min_velocity: [-1.0, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2j:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.08, yaw_goal_tolerance: 0.1}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.6, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 1.0, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 1.2, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [1.0, 0.0, 1.0]
+      min_velocity: [-1.0, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]
+A2k:
+  bt_navigator:
+    ros__parameters: {default_nav_through_poses_bt_xml: $(find-pkg-share mtu32_bringup)/config/behavior_trees/navigate_through_poses_replan_if_invalid.xml}
+  controller_server:
+    ros__parameters:
+      general_goal_checker: {xy_goal_tolerance: 0.05, yaw_goal_tolerance: 0.05}
+      FollowPath: {plugin: 'nav2_graceful_controller::GracefulController', transform_tolerance: 0.5, min_lookahead: 0.4, max_lookahead: 1.2,
+        k_phi: 2.0, k_delta: 0.5, beta: 0.6, lambda: 2.0, v_linear_min: 0.05, v_linear_max: 0.5, v_angular_max: 1.0, v_angular_min_in_place: 0.25,
+        slowdown_radius: 0.6, initial_rotation: false, prefer_final_rotation: false, rotation_scaling_factor: 0.5, allow_backward: false,
+        in_place_collision_resolution: 0.1}
+  global_costmap:
+    global_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  local_costmap:
+    local_costmap:
+      ros__parameters:
+        plugins: [static_layer, inflation_layer]
+  velocity_smoother:
+    ros__parameters:
+      max_velocity: [0.5, 0.0, 1.0]
+      min_velocity: [-0.5, 0.0, -1.0]
+      max_accel: [1.0, 0.0, 2.0]
+      max_decel: [-1.0, 0.0, -2.0]

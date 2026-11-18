@@ -1,0 +1,4 @@
+#!/bin/bash
+# Moved into colcon_ws (moveit_sim_bridge) so it deploys to real robots too; this keeps the old command in the sim.
+[ -f /home/robot/colcon_ws/install/setup.bash ] && source /home/robot/colcon_ws/install/setup.bash
+exec ros2 run moveit_sim_bridge arm_joints "$@"

@@ -1,0 +1,17 @@
+# Shared defaults of arm_task_server (the robot's manipulator_action_server). The launch file sets ready_state per
+# platform (j100: cut_init, a200 / a300: ready) and applies config/robots/<namespace>.yaml after this, so a robot only
+# lists what differs. Timeouts are on the node clock (sim time in the simulator).
+/**:
+  ros__parameters:
+    arm_group: arm_0
+    srdf_path: /etc/clearpath/robot.srdf
+    stow_state: stow            # GO STOW; missing in the SRDF = the goal fails (never pretend the arm is stowed)
+    ready_state: ready          # GO READY; '' = no move (the cutter plans from wherever the arm is)
+    drop_state: drop            # GO DROP
+    velocity_scale: 0.3         # move_group velocity / acceleration scaling for the named moves
+    move_group_action: move_action   # relative to the namespace
+    cut_stem_action: cut_stem        # relative to the namespace (stow_arm_cpp's grid_cutter_action_server)
+    server_wait_timeout: 10.0   # s, move_group / cut_stem not reachable -> the goal fails
+    move_timeout: 90.0          # s, one named move
+    harvest_timeout: 900.0      # s, one cut_stem run (several MoveIt plans + servo moves per patch: minutes)
+    feedback_period: 1.0        # s

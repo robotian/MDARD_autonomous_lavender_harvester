@@ -1,0 +1,64 @@
+# scripts/ — robot description pipeline, real-robot deploy and backup
+
+## URDF pipeline (`gen_urdf.sh` → `flatten_urdf.py`)
+
+- Input per model: generic `robot/config/robot.<model>.yaml.tmpl` (placeholders filled with throwaway values), or a real robot's `robot_data/<id>/robot.yaml` used unmodified.
+- Clearpath's `generate_description` + `xacro` run in the robot image; `mtu32_description` is built from the `colcon_ws/src/mtu32_husky` submodule, never a separate copy (one went stale before).
+- `flatten_urdf.py` output is self-contained (`sim/assets/<model>/`), so the Isaac container needs no ROS packages:
+  - meshes copied into `meshes/<pkg>/`, paths made relative; `<gazebo>`/`<ros2_control>` dropped; root name = model id (the generated serial would be mangled by USD).
+  - Collada: unnamed materials get a name (they crash the importer); non-Blender `.dae` (RealSense `d435.dae`) becomes a vertex-clustered OBJ (`DECIMATE_CELL`), because the importer silently drops it (invisible camera) and its 231k triangles cost ~30% fps.
+  - `prune_dangling_joints`: drops joints whose parent link is undefined (xacro doesn't validate; e.g. a camera on an arm the robot doesn't have).
+  - `merge_visual_only_links`: links with only `<visual>` (Jackal fenders) are folded into their parent (`merged_links.json` tells `setup_scene.py` where a merged sensor frame went). As separate bodies their fixed joint drifts once the robot drives; a synthetic mass didn't help. Their orientation is correct: don't "fix" it.
+  - `weld_empty_root_children`: an empty root link with several fixed children gets them re-parented onto the one with `<inertial>`; otherwise each becomes its own articulation fixed to the world.
+  - `limit_continuous_mimic_followers`: continuous `<mimic>` joints (Robotiq 2F-85) get a finite range from their driver; PhysX rejects them otherwise (sim crash).
+  - `limit_continuous_arm_joints`: continuous `arm_0_joint*` become ±3.12 rad, or MoveIt plans past ±π and then refuses every start state. Wheels stay continuous.
+  - `apply_mass_deltas`: what-if mass offsets wired per model in `gen_urdf.sh` (j100_0921 `chassis_link:10`); inertia unchanged.
+
+## Deploying to a real robot (`deploy_robot.sh <id>`)
+
+Workspaces on the robot, listed in `/etc/clearpath/robot.yaml` `system.ros2.workspaces` (sourced in order, later override):
+- `~/robot_ws` first: the robot's own packages (drivers, arm, cameras), built by hand (`colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release`), with a `COLCON_IGNORE` in each package this repo provides.
+- any other workspaces next, `~/colcon_ws` last: exactly `colcon_ws/src` (rsync `--delete`), built by the script with the earlier workspaces as underlays.
+
+Pitfalls:
+- A package an underlay still builds is the robot's own: the script skips this repo's copy ("not built") and removes an earlier build of it. `COLCON_IGNORE` it in `robot_ws` to use this repo's.
+- Same name ≠ same package: `swiftnav_ros2_driver` here is a messages-only stand-in for the sim; on the robot it's Swift Navigation's driver, and overriding it broke `clearpath-platform-extras`.
+- Robot-side edits: `~/colcon_ws/src` has no `.git`; the deploy compares against `~/colcon_ws/.deployed_manifest` and stops on drift (`--pull` to bring edits back, `--force` to overwrite). Building writes nothing into `src`, so any drift is a real edit.
+- Host default `cpr-<id, _→->.local` (mDNS): robot.yaml hostnames don't resolve from the lab network. Needs key login (`ssh-copy-id`). Restarts nothing.
+
+Per-robot workspaces:
+- a300_00036: `~/robot_ws`, `~/mocap4r2_ws`, `~/colcon_ws`. Keeps its own `swiftnav_ros2_driver` and `status_interfaces` (its own packages depend on it; an underlay can't depend on its overlay). `image_detection/.venv` was rewritten to `~/robot_ws` paths. Clearpath forks are `COLCON_IGNORE`d (apt packages run). `~/colcon_ws_backup` = pre-deploy workspace: keep it.
+
+## Backing up a real robot (`backup_robot.sh <id> [--no-sudo]`)
+
+- Snapshots what `deploy_robot.sh` doesn't own into `robot_data/<id>/backups/` (gitignored, mode 700: netplan holds the WiFi password); layout in the script header.
+- Not backed up: `~/colcon_ws`, `~/colcon_ws_backup` (3.5 GB on a300_00036), rosbags (hundreds of GB).
+- `sudo` needs a password (netplan files are root-only), asked once over `ssh -t`; `--no-sudo` skips those files.
+- `RESTORE.md` is manual on purpose: writing robot.yaml restarts the robot's services.
+
+## Real-robot middleware (zenoh)
+
+- Router config: `ssh robot@<ip> python3 - [wifi_if] < scripts/zenoh_router_config.py`, then `profile: /home/robot/zenoh_config/router.json5` under `system.ros2.middleware` in robot.yaml. It rate-limits only WiFi egress, so the robot's own nodes keep full rate. The profile replaces the whole router config: test a new one with a throwaway router (`ZENOH_ROUTER_CONFIG_URI=<file> ZENOH_CONFIG_OVERRIDE='listen/endpoints=["tcp/127.0.0.1:17447"]' timeout 5 ros2 run rmw_zenoh_cpp rmw_zenohd`). Clearpath's `setup.bash` also exports it as `FASTRTPS_DEFAULT_PROFILES_FILE`: remove the line before switching that robot to Fast DDS. Installed on a300_00036 and a200_0284 (`wlo1`).
+- Remote sessions must be clients (`ZENOH_CONFIG_OVERRIDE='mode="client";connect/endpoints=["tcp/<robot>:7447"]'`): a peer sees almost nothing, since the robot's nodes listen on localhost and Clearpath's router has `peers_failover_brokering: false`.
+- Data stalls come from subscribe/unsubscribe, not bandwidth: each new subscription pauses the robot's data ~0.3 s, and dozens at once pin its `rmw_zenohd` for seconds. Use long-lived subscriptions, RViz with only the needed displays, and per-robot tools as clients of that robot's router.
+- Several real robots through the base station's router need its tx queues at 16 batches per priority (set in `basestation/entrypoint.sh`, not as a runtime override, which a restart loses); with the default 2, a router restart left robots without data. Not yet stress-tested (RViz open/close through the base station, a robot's router restarting); per-robot tools still connect straight to each robot's router.
+- Cyclone DDS was tried and reverted: its default participant index allows ~10 ROS processes per host (the robot runs ~30), and the robot then can't talk to the zenoh sim and robots.
+
+## Nav2 tuning kit (`nav2_tune/`)
+
+Benchmark Nav2 on a sim robot with the coordinator's own routes; used for j100, a300 and a200 (reports: `docs/nav2_tuning_<model>.md`).
+- `trial.sh <robot> <label> [--params F] [--profiles F] [--course F] [--est-speed M/S]`: sim reset, the robot's stack without Nav2 or the operations manager (the coordinator must not hand it tasks), Nav2 as `bringup_main` starts it (`bringup_nav2_map`, optionally another params file), the course, results in `sim/generated/nav2_tune/<label>/`. Restarts the sim when the robot isn't upright after the reset (a run that went chaotic survives a timeline reset: a tipped robot made a whole trial meaningless).
+- `nav2_bench.py`: drives the course's `NavigateThroughPoses` legs (as `husky_operations_manager` does), on the node clock; ground truth = `ref_pose`. Per leg: time, xy/yaw error 2 s after the result, distance driven backwards (longest stretch), in-place rotation, recoveries. A leg still running at 3 x its estimate (route length / `--est-speed`, default 0.5 m/s, + 5 s) is cancelled and counts as failed.
+- `course.py`: a course from `status_server`'s `tools/path_check.py path A B --waypoints` in the base station container; `course_lavender_farm.json` is the one the j100 report used.
+- `summarize.py <label>...`: per-leg tables and one line per run.
+
+Pitfalls: a leg that follows an aborted one starts wherever the robot stopped (put synthetic legs last); one run per variant is not enough to call a winner (the j100 runs varied by a recovery or two); a Foxglove client connected to the robot can advertise `cmd_vel`.
+
+## Drive tuning kit (`vel_tune/`)
+
+Step test of a sim robot's drive, for `sim/config/model_params.yaml`'s `vel_ctl` and `wheel_friction` (first used for j100_0921, 2026-10-13).
+- `step_test.sh <robot> <label> [--segments full|user|screen] [--reset] [--compare <label>]`: publishes `cmd_vel` steps (`step.py`, arm stowed first), measures speed and yaw rate from the sim's ground truth (`ref_pose`), prints per-step mean error, wobble (sd), time to 90 %, overshoot, stop time and body tilt (`metrics.py`), plots it (`plot.py`, `compare.py`); results in `sim/generated/vel_check/`.
+- A gain or friction change reaches the robot at its next spawn: edit `model_params.yaml`, `docker restart a300-isaac-sim`, rerun. Try gains with zero `vel_ctl` (open loop) first: it shows what the physics does on its own.
+- Refuses to run while anything else publishes the robot's `cmd_vel` (Nav2, teleop).
+- `step_test.sh ... --in <container>`: runs in another container (`basestation`) for a model without a robot container (a200_0333).
+- `calibrate_all.py --all | --jobs <model>:<engine> ...`: the whole per-model calibration (sim/CLAUDE.md "Velocity control" step 5), ~10-15 min per job; writes `model_params.yaml` through `params_edit.py` (text edit, keeps comments).

@@ -1,0 +1,107 @@
+#!/usr/bin/env python3
+"""Fake OpenCR/Arduino firmware for pruner_action_server's own serial link (see colcon_ws/src/
+pruner_action_server/pruner_action_server/pruner_server.py) -- this sim has no real pruner hardware, and
+pruner_server otherwise fails outright ("could not open port /dev/ttyOpenCR: No such file or directory").
+
+Creates a real PTY and symlinks /dev/ttyOpenCR to its slave side. pyserial's own Serial() call (exactly what
+pruner_server does) opens a PTY slave exactly like a real tty device -- no special-casing needed on the
+pruner_server side at all, and no new system package (socat et al.) needed either, since Python's own `pty`
+module can do this directly.
+
+Implements just enough of pruner_server's own read loop to make a goal succeed: it writes "<target_integer>\n",
+then reads lines until it sees "STATUS:DONE"/"STATUS:FAIL" or times out (30s default). On any integer this stub
+runs one cut cycle on the simulated cutter (sim/scripts/ee_cutter.py, end_effector: ee_cutter): pruner/blade 1.0,
+wait until the blade joint (ee_cutter_blade_joint in platform/joint_states) has closed and stopped, pruner/blade 0.0,
+wait until it is open again, then "STATUS:DONE\n". A robot without that joint waits CYCLE_TIME_S instead. Waits run
+on the node clock (sim time with USE_SIM_TIME). Deliberately always succeeds -- never emits STATUS:FAIL, since this
+sim has no failure mode of its own to report (a blade that can't close finishes on STEP_TIMEOUT_S).
+"""
+import os
+import threading
+import time
+
+import rclpy
+from rclpy.executors import SingleThreadedExecutor
+from rclpy.node import Node
+from sensor_msgs.msg import JointState
+from std_msgs.msg import Float64
+
+DEVICE_PATH = "/dev/ttyOpenCR"
+CYCLE_TIME_S = 2.0
+BLADE_JOINT = "ee_cutter_blade_joint"
+STEP_TIMEOUT_S = 3.0
+
+
+class PrunerStub(Node):
+    def __init__(self):
+        super().__init__("pruner_stub")
+        self.pub = self.create_publisher(Float64, "pruner/blade", 10)
+        self.blade = None  # (position rad, velocity rad/s) of BLADE_JOINT
+        self.create_subscription(JointState, "platform/joint_states", self.on_joints, 10)
+
+    def on_joints(self, msg):
+        if BLADE_JOINT in msg.name:
+            i = msg.name.index(BLADE_JOINT)
+            self.blade = (msg.position[i], msg.velocity[i] if len(msg.velocity) > i else 0.0)
+
+    def now(self):
+        return self.get_clock().now().nanoseconds * 1e-9
+
+    def wait(self, done, timeout):
+        t0 = self.now()
+        while rclpy.ok() and self.now() - t0 < timeout and not done():
+            time.sleep(0.01)  # polling only: the deadline is on the node clock
+
+    def cycle(self):
+        if self.blade is None:
+            self.wait(lambda: False, CYCLE_TIME_S)
+            return f"no {BLADE_JOINT}: waited {CYCLE_TIME_S}s"
+        start = self.blade[0]
+        self.pub.publish(Float64(data=1.0))
+        self.wait(lambda: self.blade[0] - start > 0.1 and abs(self.blade[1]) < 0.05, STEP_TIMEOUT_S)
+        closed = self.blade[0]
+        self.pub.publish(Float64(data=0.0))
+        self.wait(lambda: self.blade[0] < 0.05, STEP_TIMEOUT_S)
+        return f"blade closed to {closed:.2f} rad, reopened to {self.blade[0]:.2f}"
+
+
+def main():
+    rclpy.init(args=["pruner_stub", "--ros-args", "-r", f"__ns:=/{os.environ['ROBOT_NAMESPACE']}",
+                     "-p", f"use_sim_time:={os.environ.get('USE_SIM_TIME', 'false')}"])
+    node = PrunerStub()
+    executor = SingleThreadedExecutor()
+    executor.add_node(node)
+
+    def spin():
+        while rclpy.ok():
+            executor.spin_once(timeout_sec=0.5)
+
+    threading.Thread(target=spin, daemon=True).start()
+
+    master_fd, slave_fd = os.openpty()
+    slave_path = os.ttyname(slave_fd)
+
+    if os.path.islink(DEVICE_PATH) or os.path.exists(DEVICE_PATH):
+        os.remove(DEVICE_PATH)
+    os.symlink(slave_path, DEVICE_PATH)
+    print(f"[pruner_stub] {DEVICE_PATH} -> {slave_path}", flush=True)
+
+    buf = b""
+    while True:
+        chunk = os.read(master_fd, 256)
+        if not chunk:
+            continue
+        buf += chunk
+        while b"\n" in buf:
+            line, buf = buf.split(b"\n", 1)
+            line = line.decode("utf-8", errors="replace").strip()
+            if not line:
+                continue
+            print(f"[pruner_stub] received command: {line!r}", flush=True)
+            print(f"[pruner_stub] {node.cycle()}", flush=True)
+            os.write(master_fd, b"STATUS:DONE\n")
+            print("[pruner_stub] wrote STATUS:DONE", flush=True)
+
+
+if __name__ == "__main__":
+    main()

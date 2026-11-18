@@ -1,0 +1,17 @@
+{
+  "profile": "default",
+  "notes": "a new checkout's settings (scripts/fleet_default_profile.json): the lavender farm with its chargers, j100_0921 as the sim robot, on Newton (its drive is tuned for it; under PhysX it tips at 0.5 m/s)",
+  "settings": {
+    "SIM_SCENE": "lavender_farm_chargers.usda",
+    "SIM_PHYSICS": "newton",
+    "NUM_ROBOTS": "1"
+  },
+  "slots": [
+    {"slot": 0, "model": "j100_0921"}
+  ],
+  "real_robots": {
+    "a200_0284": {"host": "192.168.50.120", "user": "robot", "cutter": false},
+    "a300_00036": {"host": "192.168.50.65", "user": "robot", "cutter": false},
+    "j100_0921": {"host": "192.168.10.177", "user": "robot", "cutter": false}
+  }
+}
