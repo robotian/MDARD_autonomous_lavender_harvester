@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 580" width="1240" height="580" font-family="Helvetica, Arial, sans-serif" role="img" aria-labelledby="t d">
+  <title id="t">Simulation architecture</title>
+  <desc id="d">The Isaac Sim container and one ROS 2 container per robot share the Docker network "ros". The sim sends odom, joint_states, tf and camera images to the robot containers and receives cmd_vel. A WebRTC client on the desktop views the sim on ports 49100/tcp and 47998/udp; Foxglove connects to each robot container's WebSocket on port 8765 plus the slot index.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#37474f"/>
+    </marker>
+  </defs>
+  <rect width="1240" height="580" fill="#ffffff"/>
+
+  <!-- the docker network -->
+  <rect x="290" y="30" width="925" height="520" rx="16" fill="#f5f7fa" stroke="#90a4ae" stroke-width="2" stroke-dasharray="8 6"/>
+  <text x="312" y="62" font-size="19" font-weight="bold" fill="#263238">Docker network "ros"</text>
+  <text x="312" y="86" font-size="15" fill="#546e7a">middleware: rmw_zenoh_cpp through zenoh-router, or Fast DDS</text>
+
+  <!-- desktop side -->
+  <text x="125" y="150" font-size="14" fill="#78909c" text-anchor="middle">on your desktop</text>
+  <rect x="20" y="165" width="210" height="80" rx="10" fill="#ffffff" stroke="#546e7a" stroke-width="2"/>
+  <text x="125" y="199" font-size="17" font-weight="bold" fill="#263238" text-anchor="middle">Isaac Sim</text>
+  <text x="125" y="222" font-size="17" font-weight="bold" fill="#263238" text-anchor="middle">WebRTC client</text>
+  <rect x="20" y="430" width="210" height="64" rx="10" fill="#ffffff" stroke="#546e7a" stroke-width="2"/>
+  <text x="125" y="469" font-size="17" font-weight="bold" fill="#263238" text-anchor="middle">Foxglove</text>
+
+  <!-- isaac-sim -->
+  <rect x="330" y="125" width="270" height="200" rx="12" fill="#e8f5e9" stroke="#2e7d32" stroke-width="2.5"/>
+  <text x="465" y="162" font-size="21" font-weight="bold" fill="#1b5e20" text-anchor="middle">isaac-sim</text>
+  <text x="465" y="194" font-size="15" fill="#263238" text-anchor="middle">N simulated robots, each an</text>
+  <text x="465" y="216" font-size="15" fill="#263238" text-anchor="middle">A300 / A200 / Jackal / Ridgeback</text>
+  <text x="465" y="238" font-size="15" fill="#263238" text-anchor="middle">with a D435i camera</text>
+  <text x="465" y="272" font-size="15" fill="#263238" text-anchor="middle">physics, sensors, scene</text>
+  <text x="465" y="298" font-size="15" font-weight="bold" fill="#263238" text-anchor="middle">ROS 2 bridge</text>
+
+  <!-- robot containers -->
+  <rect x="850" y="110" width="340" height="415" rx="12" fill="#fff8e1" stroke="#f9a825" stroke-width="2.5"/>
+  <text x="1020" y="142" font-size="17" font-weight="bold" fill="#5d4037" text-anchor="middle">one ROS 2 container per robot</text>
+  <text x="1020" y="164" font-size="13" fill="#6d4c41" text-anchor="middle">stands in for its onboard computer (N = NUM_ROBOTS)</text>
+
+  <rect x="875" y="185" width="290" height="62" rx="8" fill="#ffffff" stroke="#f9a825" stroke-width="2"/>
+  <text x="893" y="223" font-size="18" font-weight="bold" fill="#263238">a300_0000</text>
+  <text x="1148" y="223" font-size="14" fill="#546e7a" text-anchor="end">Foxglove on 8765</text>
+
+  <rect x="875" y="259" width="290" height="62" rx="8" fill="#ffffff" stroke="#f9a825" stroke-width="2"/>
+  <text x="893" y="297" font-size="18" font-weight="bold" fill="#263238">j100_0921</text>
+  <text x="1148" y="297" font-size="14" fill="#546e7a" text-anchor="end">Foxglove on 8766</text>
+
+  <rect x="875" y="333" width="290" height="62" rx="8" fill="#ffffff" stroke="#f9a825" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="893" y="371" font-size="18" font-weight="bold" fill="#78909c">...</text>
+  <text x="1148" y="371" font-size="14" fill="#546e7a" text-anchor="end">8765 + slot index</text>
+
+  <text x="1020" y="432" font-size="14" fill="#5d4037" text-anchor="middle">each runs robot_state_publisher, EKF,</text>
+  <text x="1020" y="452" font-size="14" fill="#5d4037" text-anchor="middle">teleop, RViz and a Foxglove bridge</text>
+
+  <!-- topics between the sim and the robots -->
+  <line x1="600" y1="185" x2="848" y2="185" stroke="#37474f" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="725" y="153" font-size="15" fill="#263238" text-anchor="middle">odom, joint_states, tf,</text>
+  <text x="725" y="173" font-size="15" fill="#263238" text-anchor="middle">camera images</text>
+  <line x1="850" y1="265" x2="602" y2="265" stroke="#37474f" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="725" y="255" font-size="15" fill="#263238" text-anchor="middle">cmd_vel</text>
+
+  <!-- zenoh router -->
+  <rect x="640" y="345" width="170" height="44" rx="22" fill="#e3f2fd" stroke="#1565c0" stroke-width="2"/>
+  <text x="725" y="373" font-size="16" font-weight="bold" fill="#0d47a1" text-anchor="middle">zenoh-router</text>
+  <path d="M640 367 L560 367 L560 327" fill="none" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5 5"/>
+  <line x1="810" y1="367" x2="850" y2="367" stroke="#1565c0" stroke-width="1.8" stroke-dasharray="5 5"/>
+  <text x="725" y="410" font-size="13" fill="#1565c0" text-anchor="middle">every zenoh session is its client</text>
+
+  <!-- desktop connections -->
+  <line x1="230" y1="205" x2="328" y2="205" stroke="#37474f" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="125" y="268" font-size="14" fill="#263238" text-anchor="middle">ports 49100/tcp, 47998/udp</text>
+  <line x1="230" y1="490" x2="848" y2="490" stroke="#37474f" stroke-width="2.5" marker-end="url(#arrow)"/>
+  <text x="540" y="478" font-size="15" fill="#263238" text-anchor="middle">WebSocket, one port per robot: 8765, 8766, ...</text>
+</svg>

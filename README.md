@@ -24,15 +24,7 @@ A configurable number (0–8, one if the settings don't say otherwise) of Clearp
 - **Each robot** has its own ROS 2 container, standing in for the robot's onboard computer. It talks to the sim over a private Docker network, as a real robot would over a LAN. The middleware is `rmw_zenoh_cpp` (as on the real robots, through a `zenoh-router` container) or Fast DDS; see *Middleware*.
 - Inside a robot container you can view the camera, drive with the keyboard, open RViz and run a Foxglove bridge.
 
-```
-                 ┌──────────────────── docker network "ros" (rmw_zenoh_cpp via zenoh-router, or FastDDS) ────┐
- WebRTC client ──┤ isaac-sim  (N robots, each A300/A200/Jackal/Ridgeback + D435i, ROS 2 bridge)                │
- 49100/tcp       │    ▲ cmd_vel        │ odom, joint_states, tf, camera images                                │
- 47998/udp       │    │                ▼                                                                      │
-                 │ a300_0000   j100_0921   ...        ← robot_state_publisher, EKF, teleop, RViz, foxglove    │
-                 └────────────────────────────────────────────────────────────────────────────────────────────┘
-                                8765         8766       (N = NUM_ROBOTS, Foxglove WebSocket on 8765 + slot index)
-```
+![The Isaac Sim container and one ROS 2 container per robot on the Docker network "ros": the sim sends odom, joint_states, tf and camera images and receives cmd_vel; a WebRTC client views the sim on 49100/tcp and 47998/udp, Foxglove connects to each robot on 8765 + its slot index](docs/images/sim_architecture.svg)
 
 ## Requirements
 
